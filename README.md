@@ -1,2 +1,2 @@
 # plume
-A hypopycnal plume model build with landlab
+A hypopycnal plume model built with landlab
