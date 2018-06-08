@@ -31,7 +31,7 @@ test:
     - pytest
   imports:
     - plume
-  script:
+  commands:
     - pytest
 
 about:
