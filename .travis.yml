@@ -36,3 +36,4 @@ install:
 - conda install -q conda-build
 script:
 - conda build ./recipe -c landlab -c conda-forge
+- pytest
