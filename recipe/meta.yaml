@@ -1,0 +1,42 @@
+{% set name = "plume" %}
+{% set version = "0.1" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  path: ..
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - numpy
+    - cythongsl
+    - landlab
+
+  run:
+    - python
+    - setuptools
+    - numpy
+    - landlab
+
+build:
+  number: 0
+  script: python setup.py install --single-version-externally-managed --record record.txt
+
+test:
+  requires:
+    - pytest
+  imports:
+    - plume
+  script:
+    - pytest
+
+about:
+  home: https://github.com/mcflugen/plume
+  license: MIT
+  license_file: LICENSE
+  summary: Hypopycnal plume
+  dev_url: https://github.com/mcflugen/plume
