@@ -41,7 +41,7 @@ def nearest_point_on_ray(points, origin=(0., 0.), angle=PI_4, out=None):
     u_bar = unit_vector(u)
     v_bar = np.asarray((np.cos(angle), np.sin(angle)))
 
-    v_dot_u = np.dot(v_bar, u_bar)
+    v_dot_u = np.asarray(np.dot(v_bar, u_bar)).reshape((-1, ))
 
     close_to_line = v_dot_u > EPSILON
 
