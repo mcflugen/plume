@@ -27,12 +27,8 @@ build:
   script: python setup.py install --single-version-externally-managed --record record.txt
 
 test:
-  requires:
-    - pytest
   imports:
     - plume
-  commands:
-    - pytest
 
 about:
   home: https://github.com/mcflugen/plume
