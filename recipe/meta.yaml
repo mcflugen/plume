@@ -33,8 +33,6 @@ build:
 test:
   imports:
     - plume
-  commands:
-    - pytest plume
 
 about:
   home: https://github.com/mcflugen/plume
