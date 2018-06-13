@@ -3,13 +3,11 @@ from distutils.extension import Extension
 
 import numpy as np
 import cython_gsl
-
-__version__ = '0.1'
+import versioneer
 
 
 def read_requirements():
     import os
-
 
     path = os.path.dirname(os.path.abspath(__file__))
     requirements_file = os.path.join(path, 'requirements.txt')
@@ -23,7 +21,7 @@ def read_requirements():
 
 
 setup(name='plume',
-      version=__version__,
+      version=versioneer.get_version(),
       description='A hypopycnal sediment-carrying plume entering the ocean',
       author='Eric Hutton',
       author_email='huttone@colorado.edu',
@@ -44,4 +42,5 @@ setup(name='plume',
                     libraries=cython_gsl.get_libraries(),
                     library_dirs=[cython_gsl.get_library_dir()],
                     include_dirs=[cython_gsl.get_cython_include_dir()])],
+      cmdclass=versioneer.get_cmdclass(),
 )
