@@ -33,6 +33,8 @@ install:
 - conda config --set always_yes yes --set changeps1 no
 - conda create -n _testing python=$TRAVIS_PYTHON_VERSION
 - source activate _testing
-- conda install -q conda-build
+- conda install -q conda-build pytest
 script:
 - conda build ./recipe -c landlab -c conda-forge
+- conda install --file=requirements.txt -c landlab -c conda-forge
+- pytest

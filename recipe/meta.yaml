@@ -12,14 +12,18 @@ requirements:
   build:
     - python
     - setuptools
+    - scipy
     - numpy
+    - pyyaml
     - cythongsl
     - landlab
 
   run:
     - python
     - setuptools
+    - scipy
     - numpy
+    - pyyaml
     - landlab
 
 build:
@@ -27,12 +31,8 @@ build:
   script: python setup.py install --single-version-externally-managed --record record.txt
 
 test:
-  requires:
-    - pytest
   imports:
     - plume
-  script:
-    - pytest
 
 about:
   home: https://github.com/mcflugen/plume
