@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 import numpy as np
-import scipy
 from landlab import Component, FieldError
 
 from .centerline import PlumeCenterline
@@ -276,8 +275,8 @@ class Plume(Component):
         bulk_density = self.grid.at_grid["sediment__bulk_density"]
         removal_rate = self.grid.at_grid["sediment__removal_rate"]
 
-        ocean_cw = 0.0
-        sed_rho = 1600.0
+        # ocean_cw = 0.0
+        # sed_rho = 1600.0
         dl = 0.5 * (self.grid.dx + self.grid.dy)
 
         conc_sed = self.calc_sediment_concentration(removal_rate)
@@ -418,7 +417,7 @@ class Plume(Component):
 
     def run_one_step(self):
         removal_rate = self.grid.at_grid["sediment__removal_rate"]
-        bulk_density = self.grid.at_grid["sediment__bulk_density"]
+        # bulk_density = self.grid.at_grid["sediment__bulk_density"]
         try:
             needs_updating = np.fabs(self._removal_rate - removal_rate) > 1e-12
         except AttributeError:

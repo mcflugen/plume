@@ -1,8 +1,5 @@
 #! /usr/bin/env python
 import numpy as np
-import scipy.optimize
-import scipy.spatial
-from scipy.spatial.distance import euclidean
 
 EPSILON = np.finfo(float).eps
 PI_4 = np.pi / 4.0

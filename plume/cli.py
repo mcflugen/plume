@@ -12,7 +12,6 @@ import numpy as np
 import yaml
 from landlab import RasterModelGrid, load_params
 from landlab.io.netcdf import write_raster_netcdf
-from landlab.plot import imshow_grid
 
 from .plume import Plume
 
@@ -33,8 +32,12 @@ DEFAULT_PARAMS = {
         "location": [0.0, 0.0],
         "angle": 0.0,
     },
-    "sediment": {"removal_rate": 60.0, "bulk_density": 1600.0,},
-    "ocean": {"along_shore_velocity": 0.1, "sediment_concentration": 0.0,},
+    "sediment": {"removal_rate": 60.0, "bulk_density": 1600.0},
+    "ocean": {
+        "filepath": "ocean.csv",
+        "along_shore_velocity": 0.1,
+        "sediment_concentration": 0.0,
+    },
     "output": {"filepath": "plume.nc"},
 }
 
@@ -74,8 +77,12 @@ def load_config(file: Optional[TextIO] = None):
             "location": [0.0, 0.0],
             "angle": 0.0,
         },
-        "sediment": {"removal_rate": 60.0, "bulk_density": 1600.0,},
-        "ocean": {"along_shore_velocity": 0.1, "sediment_concentration": 0.0,},
+        "sediment": {"removal_rate": 60.0, "bulk_density": 1600.0},
+        "ocean": {
+            "filepath": "ocean.csv",
+            "along_shore_velocity": 0.1,
+            "sediment_concentration": 0.0,
+        },
         "output": {"filepath": "plume.nc"},
     }
     if file is not None:
@@ -97,6 +104,10 @@ def _contents_of_input_file(infile: str) -> str:
         "river": as_csv(
             [[0.0, 200.0, 1.0, 1.0]],
             header="Time [d], Width [m], Depth [m], Velocity [m/s]",
+        ),
+        "ocean": as_csv(
+            [[0.0, 0.1, 0.0]],
+            header="Time [d], Along-shore velocity [m/s], Sediment Concentration [-]",
         ),
     }
 
@@ -165,6 +176,9 @@ def run(run_dir: str, dry_run: bool, verbose: bool) -> None:
         river = np.loadtxt(
             params["river"]["filepath"], delimiter=",", comments="#"
         ).reshape((-1, 4))
+        ocean = np.loadtxt(
+            params["ocean"]["filepath"], delimiter=",", comments="#"
+        ).reshape((-1, 3))
 
         for day, width, depth, velocity in river:
             params["river"]["angle"] = np.deg2rad(params["river"]["angle"])
@@ -196,7 +210,7 @@ def run(run_dir: str, dry_run: bool, verbose: bool) -> None:
 
 
 @plume.command()
-@click.argument("infile", type=click.Choice(["plume", "river"]))
+@click.argument("infile", type=click.Choice(["ocean", "plume", "river"]))
 def show(infile: str) -> None:
     """Show example input files."""
     print(_contents_of_input_file(infile))
