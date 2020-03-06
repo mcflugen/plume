@@ -4,14 +4,61 @@ os:
 - osx
 env:
   matrix:
-  - TRAVIS_PYTHON_VERSION="2.7"
-  - TRAVIS_PYTHON_VERSION="3.5"
-  - TRAVIS_PYTHON_VERSION="3.6"
+  - PYTHON="3.8"
+  - PYTHON="3.7"
+  - PYTHON="3.6"
   global:
   - CONDA_PREFIX=$HOME/miniconda
   - MINICONDA_URL_BASE="https://repo.continuum.io/miniconda/Miniconda3-latest"
+  - secure: If5+q1H1EQwEZrhYvQAGoYBaVTu1Bfkw+J5OrIY5CanuhLExXK1CLVHMKML2sZdMEHIOGhBYaeUqHlEVbvP94Wb8RobfL4NT5FjOfXk9zbiT3vRdAbgJzCVy2ervx6m4acZcnrn0LCu6FQW294M7DUEK77ZQJToj3Qy0ypWDwzijAN/wWD5NZWc8Kndg2yH76qBXCQO79S242/gryPq83dbjwVW79+uUCsmhKsV5r8MIKib0Xm6zbd8a5qLsSveTNlx6zNMaVadkZM6r7mKt6mk6pEZxuL8GWWUo0SntZCW3FNncO9SrTfC2uOsBRF3BWDIWZHVqcedkdahNsOkVr95rYk+XjeKj0alWY8RsBwGl1XWMIJAFEQdgVfy+wvccOB41ZZXwICaT8TKKGpY/Za97DJF1g6rU/PCojA578YCyBjrqng5X7nQh9FBS74VpItt2oHE3KnAwyTrcboatXL2z1lpeHenAK8+rijYzLY288MMzTXw4risaPEI32QxGtPlzymDCbIAJqi3tZ5dTRTbffEmSjmRp3aBer0gY2qajq7uKo4TLiqhOIpWeQZA/ncF2PUqbkFtkd9ZejcZakUoAZ8wsAhfUTvebVsWMf7A7g1BKrStNdlo8OnNX0soIMLUSzGACag8khHUOdSKYEEtxMQC2wW5diq3VC36HbKs=
 sudo: false
-filter_secrets: false
+jobs:
+  include:
+  - stage: lint
+    os: linux
+    script:
+    - pip install flake8
+    - make lint
+  - stage: deploy
+    if: tag=~ v.*$
+    os: linux
+    env: PYTHON=3.8
+    script: &1
+    - pip install twine wheel
+    - python setup.py sdist
+    - twine upload -u mcflugen -p$PYPI_PASS dist/*plume*
+
+  - &deploy
+    stage: deploy
+    if: tag =~ v.*$
+    os: osx
+    env: CONDA_ENV=3.8
+    script:
+    - pip install twine wheel
+    - python setup.py bdist_wheel
+    - twine upload -u mcflugen -p$PYPI_PASS dist/*plume*
+  - <<: *deploy
+    os: osx
+    env: CONDA_ENV=3.7
+  - <<: *deploy
+    os: osx
+    env: CONDA_ENV=3.6
+
+  - <<: *deploy
+    sudo: required
+    os: linux
+    services:
+    - docker
+    env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+         PLAT=manylinux1_x86_64
+         CONDA_ENV=3.7
+    install:
+    - docker pull $DOCKER_IMAGE
+    script:
+    - docker run --rm -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE /io/.ci/travis/build_wheels.sh
+    - ls wheelhouse/
+    - pip install twine
+    - twine upload -u mcflugen -p$PYPI_PASS wheelhouse/*plume*manylinux*
 before_install:
 - |
   if [[ $TRAVIS_OS_NAME == "osx" ]]; then
@@ -19,7 +66,6 @@ before_install:
     brew cleanup -s
     rm -rf $(brew --cache)
   fi
-install:
 - |
   if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     OS="MacOSX-x86_64"
@@ -31,10 +77,12 @@ install:
 - export PATH="$CONDA_PREFIX/bin:$PATH"
 - hash -r
 - conda config --set always_yes yes --set changeps1 no
-- conda create -n _testing python=$TRAVIS_PYTHON_VERSION
+- conda create -n _testing python=$PYTHON --file=requirements-setup.txt
 - source activate _testing
-- conda install -q conda-build pytest
+- conda info -a && conda list
+install:
+- pip install --pre -e .
 script:
-- conda build ./recipe -c landlab -c conda-forge
-- conda install --file=requirements.txt -c landlab -c conda-forge
-- pytest
+- pip install -r requirements-testing.txt
+- pytest -vvv --cov=plume --cov-report=xml:$(pwd)/coverage.xml --mypy
+after_success: coveralls
