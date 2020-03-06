@@ -1,4 +1,5 @@
-scipy
+click
+landlab>=2.0.0b7
 numpy
 pyyaml
-landlab
+scipy

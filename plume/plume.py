@@ -108,7 +108,7 @@ class Plume(Component):
                 try:
                     self.grid.add_zeros(name, at=self._var_mapping[name],
                                         units=self._var_units[name],
-                                        noclobber=True)
+                                        clobber=False)
                 except FieldError:
                     pass
 
@@ -307,11 +307,12 @@ class Plume(Component):
             return self._zones
 
     def calc_nearest_centerline_point(self):
-        return self._centerline.nearest_point(zip(self.grid.x_of_node,
-                                                  self.grid.y_of_node))
+        return self._centerline.nearest_point(
+            tuple(zip(self.grid.x_of_node, self.grid.y_of_node))
+        )
 
     def calc_distance_to_centerline(self):
-        xy_at_node = zip(self.grid.x_of_node, self.grid.y_of_node)
+        xy_at_node = tuple(zip(self.grid.x_of_node, self.grid.y_of_node))
         return np.sqrt(np.power(self.xy_at_nearest_centerline -
                                 xy_at_node, 2).sum(axis=1))
 
