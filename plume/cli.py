@@ -10,19 +10,21 @@ from typing import Optional, TextIO
 import click
 import numpy as np
 import yaml
-
 from landlab import RasterModelGrid, load_params
-from landlab.plot import imshow_grid
 from landlab.io.netcdf import write_raster_netcdf
+from landlab.plot import imshow_grid
 
 from .plume import Plume
-
 
 out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg="red", err=True)
 
 DEFAULT_PARAMS = {
-    "grid": {"shape": [50, 100], "xy_spacing": [100.0, 100.0], "xy_of_lower_left": [0.0, 0.0],},
+    "grid": {
+        "shape": [50, 100],
+        "xy_spacing": [100.0, 100.0],
+        "xy_of_lower_left": [0.0, 0.0],
+    },
     "river": {
         "filepath": "river.csv",
         "width": 200.0,
@@ -59,7 +61,11 @@ def load_config(file: Optional[TextIO] = None):
         Config parameters.
     """
     conf = {
-        "grid": {"shape": [50, 100], "xy_spacing": [100.0, 100.0], "xy_of_lower_left": [0.0, 0.0],},
+        "grid": {
+            "shape": [50, 100],
+            "xy_spacing": [100.0, 100.0],
+            "xy_of_lower_left": [0.0, 0.0],
+        },
         "river": {
             "filepath": "river.csv",
             "width": 200.0,
@@ -90,7 +96,7 @@ def _contents_of_input_file(infile: str) -> str:
         "plume": yaml.dump(params, default_flow_style=False),
         "river": as_csv(
             [[0.0, 200.0, 1.0, 1.0]],
-            header="Time [d], Width [m], Depth [m], Velocity [m/s]"
+            header="Time [d], Width [m], Depth [m], Velocity [m/s]",
         ),
     }
 
@@ -156,7 +162,9 @@ def run(run_dir: str, dry_run: bool, verbose: bool) -> None:
             xy_of_lower_left=params["grid"]["xy_of_lower_left"],
         )
 
-        river = np.loadtxt(params["river"]["filepath"], delimiter=",", comments="#").reshape((-1, 4))
+        river = np.loadtxt(
+            params["river"]["filepath"], delimiter=",", comments="#"
+        ).reshape((-1, 4))
 
         for day, width, depth, velocity in river:
             params["river"]["angle"] = np.deg2rad(params["river"]["angle"])
@@ -171,8 +179,12 @@ def run(run_dir: str, dry_run: bool, verbose: bool) -> None:
                 ocean_velocity=params["ocean"]["along_shore_velocity"],
             )
 
-            plume.grid.at_grid["sediment__removal_rate"] = params["sediment"]["removal_rate"]
-            plume.grid.at_grid["sediment__bulk_density"] = params["sediment"]["bulk_density"]
+            plume.grid.at_grid["sediment__removal_rate"] = params["sediment"][
+                "removal_rate"
+            ]
+            plume.grid.at_grid["sediment__bulk_density"] = params["sediment"][
+                "bulk_density"
+            ]
             deposit = plume.calc_deposit_thickness(params["sediment"]["removal_rate"])
 
         write_raster_netcdf(params["output"]["filepath"], plume.grid)
