@@ -32,7 +32,7 @@ setup(name='plume',
       include_dirs = [np.get_include(), cython_gsl.get_include()],
       entry_points={
           'console_scripts': [
-              'plume=plume.cli:main',
+              'plume=plume.cli:plume',
           ],
       },
       ext_modules = [
