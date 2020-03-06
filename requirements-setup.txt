@@ -1,0 +1,4 @@
+cython
+cythongsl
+gsl
+numpy
