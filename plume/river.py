@@ -21,9 +21,17 @@ class River(object):
     def velocity(self):
         return self._velocity
 
+    @velocity.setter
+    def velocity(self, new_val):
+        self._velocity = new_val
+
     @property
     def width(self):
         return self._width
+
+    @width.setter
+    def width(self, new_val):
+        self._width = new_val
 
     @property
     def depth(self):

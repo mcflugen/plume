@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 import numpy as np
 import scipy
-
 from landlab import Component, FieldError
+
+from functools import lru_cache
+
 from .centerline import PlumeCenterline
 from .river import River
 
@@ -19,6 +21,8 @@ class Plume(Component):
     _input_var_names = (
         'sediment__removal_rate',
         'sediment__bulk_density',
+        'channel_exit_water_flow__speed',
+        'channel_exit__width',
     )
 
     _output_var_names = (
@@ -33,6 +37,8 @@ class Plume(Component):
         'sediment_deposit__thickness': 'm',
         'sediment__removal_rate': '1 / d',
         'sediment__bulk_density': 'kg / m^3',
+        'channel_exit_water_flow__speed': 'm / s',
+        'channel_exit__width': 'm',
     }
 
     _var_mapping = {
@@ -41,6 +47,8 @@ class Plume(Component):
         'sediment_deposit__thickness': 'node',
         'sediment__removal_rate': 'grid',
         'sediment__bulk_density': 'grid',
+        'channel_exit_water_flow__speed': 'grid',
+        'channel_exit__width': 'grid',
     }
 
     _var_doc = {
@@ -62,7 +70,7 @@ class Plume(Component):
                  river_depth=1., river_angle=0., ocean_velocity=0.,
                  river_concentration=1., river_loc=(0., 0.),
                  sediment_removal_rate=1., sediment_bulk_density=1600.,
-                 **kwds):
+                 ):
         """Simulate a hypopycnal sediment plume.
 
         Parameters
@@ -90,14 +98,14 @@ class Plume(Component):
                             loc=river_loc)
 
         self._river_concentration = river_concentration
-        self._centerline = PlumeCenterline(river_width,
-                                           river_velocity=river_velocity,
-                                           ocean_velocity=ocean_velocity,
-                                           river_angle=river_angle,
-                                           river_loc=river_loc)
+        # self._river_width = river_width
+        # self._river_velocity = river_velocity
+        self._ocean_velocity = ocean_velocity
+        self._river_angle = river_angle
+        self._river_loc = river_loc
 
-        self._sediment_removal_rate = sediment_removal_rate
-        self._sediment_bulk_density = sediment_bulk_density
+        # self._sediment_removal_rate = sediment_removal_rate
+        # self._sediment_bulk_density = sediment_bulk_density
 
         super(Plume, self).__init__(grid, **kwds)
 
@@ -114,16 +122,71 @@ class Plume(Component):
 
         self.grid.at_grid['sediment__removal_rate'] = sediment_removal_rate
         self.grid.at_grid['sediment__bulk_density'] = sediment_bulk_density
+        self.grid.at_grid['channel_exit_water_flow__speed'] = river_velocity
+        self.grid.at_grid['channel_exit__width'] = river_width
 
         self._albertson_velocity = self.grid.zeros(at='node')
 
     @property
-    def centerline(self):
-        return self._centerline
+    def sediment_removal_rate(self):
+        return float(self.grid.at_grid['sediment__removal_rate'])
 
     @property
-    def river(self):
-        return self._river
+    def sediment_bulk_density(self):
+        return float(self.grid.at_grid['sediment__bulk_density'])
+
+    @property
+    def river_velocity(self):
+        return float(self.grid.at_grid['channel_exit_water_flow__speed'])
+
+    @river_velocity.setter
+    def river_velocity(self, new_val):
+        if new_val != self.river_velocity:
+            self.clear_cache()
+            self.grid.at_grid['channel_exit_water_flow__speed'] = new_val
+
+    @property
+    def river_width(self):
+        return float(self.grid.at_grid['channel_exit__width'])
+
+    @river_width.setter
+    def river_width(self, new_val):
+        if new_val != self.river_width:
+            self.clear_cache()
+            self.grid.at_grid['channel_exit__width'] = new_val
+
+    def clear_cache(self):
+        attrs = (
+            '_centerline',
+            '_concentration',
+            '_established_flow',
+            '_establishing_flow',
+            '_plug_flow',
+            '_distance_to_river',
+            '_xy_at_nearest_centerline',
+            '_distance_to_centerline',
+            '_distance_along_centerline',
+            '_zones',
+        )
+        for attr in attrs:
+            try:
+                del self.__dict__[attr]
+            except KeyError:
+                pass
+
+    @property
+    def centerline(self):
+        try:
+            self._centerline
+        except AttributeError:
+            self._centerline = PlumeCenterline(
+                self.river_width,
+                river_velocity=self.river_velocity,
+                ocean_velocity=self._ocean_velocity,
+                river_angle=self._river_angle,
+                river_loc=self._river_loc)
+        finally:
+            return self._centerline
 
     @property
     def ocean_sed_concentration(self):
@@ -131,15 +194,11 @@ class Plume(Component):
 
     @property
     def shore_normal(self):
-        return self.river.angle
-
-    @property
-    def sediment_removal_rate(self):
-        return self._sediment_removal_rate
+        return self._river.angle
 
     @property
     def plug_width(self):
-        return self.river.width * self.PLUG_WIDTH
+        return self.river_width * self.PLUG_WIDTH
 
     @property
     def established_flow(self):
@@ -174,8 +233,8 @@ class Plume(Component):
             self._distance_to_river
         except AttributeError:
             self._distance_to_river = np.sqrt(
-                np.power(self.grid.x_of_node - self.river.x0, 2) +
-                np.power(self.grid.y_of_node - self.river.y0, 2))
+                np.power(self.grid.x_of_node - self._river.x0, 2) +
+                np.power(self.grid.y_of_node - self._river.y0, 2))
         finally:
             return self._distance_to_river
 
@@ -203,14 +262,14 @@ class Plume(Component):
 
         a = (y[self.establishing_flow] +
              0.5 * SQRT_PI * self.CONST_ALBERTSON * x[self.establishing_flow] -
-             .5 * self.river.width)
+             .5 * self.river_width)
         b = np.clip(
             SQRT_TWO * self.CONST_ALBERTSON * x[self.establishing_flow],
             0.01, None)
         conc[self.establishing_flow] = np.exp(- np.sqrt(a / b))
         u_albertson[self.establishing_flow] = np.exp(-(a / b) ** 2)
 
-        v1 = (self.river.width /
+        v1 = (self.river_width /
               (SQRT_PI * self.CONST_ALBERTSON * x[self.established_flow]))
         v2 = (y[self.established_flow] /
               (SQRT_TWO * self.CONST_ALBERTSON * x[self.established_flow]))
@@ -226,10 +285,11 @@ class Plume(Component):
         conc_sed.fill(0.)
 
         conc_sed = conc_sed.reshape(self.grid.shape)
-        concentration = self.concentration.reshape(self.grid.shape)
+        concentration = self.calc_concentration().reshape(self.grid.shape)
+        # concentration = self.concentration.reshape(self.grid.shape)
         u_albertson = self._albertson_velocity.reshape(self.grid.shape)
 
-        uu = .2 * self.river.velocity * (1. +
+        uu = .2 * self.river_velocity * (1. +
                                          u_albertson[0] + 3. * u_albertson)
 
         inds = np.where(u_albertson > 0.05)
@@ -255,7 +315,7 @@ class Plume(Component):
         dl = 0.5 * (self.grid.dx + self.grid.dy)
 
         conc_sed = self.calc_sediment_concentration(removal_rate)
-        u_albertson = self._albertson_velocity.reshape(self.grid.shape) * self.river.velocity
+        u_albertson = self._albertson_velocity.reshape(self.grid.shape) * self.river_velocity
         deposit = deposit.reshape(self.grid.shape)
 
         # inds = np.where((conc_sed >= ocean_cw) & (u_albertson > 0.05))
@@ -265,7 +325,7 @@ class Plume(Component):
         deposit[inds] = (
             conc_sed[inds] *
             (np.exp(removal_rate / SECONDS_PER_DAY * dl / u_albertson[inds]) - 1.) *
-            (self.river.depth * SECONDS_PER_DAY * u_albertson[inds]) /
+            (self._river.depth * SECONDS_PER_DAY * u_albertson[inds]) /
             (bulk_density * dl))
 
         return deposit
@@ -307,8 +367,8 @@ class Plume(Component):
             return self._zones
 
     def calc_nearest_centerline_point(self):
-        return self._centerline.nearest_point(zip(self.grid.x_of_node,
-                                                  self.grid.y_of_node))
+        return self.centerline.nearest_point(zip(self.grid.x_of_node,
+                                                 self.grid.y_of_node))
 
     def calc_distance_to_centerline(self):
         xy_at_node = zip(self.grid.x_of_node, self.grid.y_of_node)
@@ -318,12 +378,12 @@ class Plume(Component):
     def calc_distance_along_centerline(self):
         bounds = np.empty((self.grid.number_of_nodes, 2))
         if self.centerline.is_function_of_x():
-            bounds[:, 0] = self.river.x0
+            bounds[:, 0] = self._river.x0
             bounds[:, 1] = self.xy_at_nearest_centerline[:, 0]
         else:
-            bounds[:, 0] = self.river.y0
+            bounds[:, 0] = self._river.y0
             bounds[:, 1] = self.xy_at_nearest_centerline[:, 1]
-        return self._centerline.path_length(bounds)
+        return self.centerline.path_length(bounds)
 
     def calc_zones(self):
         zones = np.full(self.grid.number_of_nodes, self.ESTABLISHED_FLOW,
@@ -338,7 +398,7 @@ class Plume(Component):
         return np.where(
             (lengths < self.plug_width) &
             (self.distance_to_centerline <
-             (self.river.width * .5) * (1 - lengths / (self.plug_width))))
+             (self.river_width * .5) * (1 - lengths / (self.plug_width))))
 
     def where_established_flow(self):
         lengths = self.distance_along_centerline
@@ -349,22 +409,22 @@ class Plume(Component):
         return np.where(
                 (lengths < self.plug_width) &
                 (self.distance_to_centerline >=
-                 (self.river.width * .5) *
+                 (self.river_width * .5) *
                  (1. - lengths / self.plug_width)))
 
     def where_ocean(self):
         v_river = self.unit_vector(np.cos(self.shore_angle),
                                    np.sin(self.shore_angle))
-        v_point = self.unit_vector(self.river.x0 - self.grid.x_of_node,
-                                   self.river.y0 - self.grid.y_of_node)
+        v_point = self.unit_vector(self._river.x0 - self.grid.x_of_node,
+                                   self._river.y0 - self.grid.y_of_node)
 
         return np.where(np.dot(v_river.squeeze(), v_point) <= 0.)
 
     def where_land(self):
         v_river = self.unit_vector(np.cos(self.shore_angle),
                                    np.sin(self.shore_angle))
-        v_point = self.unit_vector(self.river.x0 - self.grid.x_of_node,
-                                   self.river.y0 - self.grid.y_of_node)
+        v_point = self.unit_vector(self._river.x0 - self.grid.x_of_node,
+                                   self._river.y0 - self.grid.y_of_node)
 
         return np.where(np.dot(v_river.squeeze(), v_point) > 0.)
 
@@ -380,14 +440,18 @@ class Plume(Component):
         return np.divide(v, v_abs, where=v_abs>0., out=np.zeros_like(v))
 
     def run_one_step(self):
-        removal_rate = self.grid.at_grid['sediment__removal_rate']
-        bulk_density = self.grid.at_grid['sediment__bulk_density']
-        try:
-            needs_updating = np.fabs(self._removal_rate -
-                                     removal_rate) > 1e-12
-        except AttributeError:
-            needs_updating = True
+        self._run_one_step(
+            self.sediment_removal_rate,
+            self.sediment_bulk_density,
+            self.river_velocity,
+            self.river_width,
+        )
 
-        if needs_updating:
-            self.calc_deposit_thickness(removal_rate)
-            self._removal_rate = removal_rate
+    @lru_cache(1)
+    def _run_one_step(self, *args):
+        print('recalculating...')
+        self.clear_cache()
+        self.calc_deposit_thickness(self.sediment_removal_rate)
+
+    def update(self):
+        return self.run_one_step()
