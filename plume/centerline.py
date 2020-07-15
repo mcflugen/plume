@@ -1,22 +1,20 @@
 #! /usr/bin/env python
+import numpy as np
 import scipy.optimize
 import scipy.spatial
-import numpy as np
-
 from scipy.spatial.distance import euclidean
 
-
 EPSILON = np.finfo(float).eps
-PI_4 = np.pi / 4.
+PI_4 = np.pi / 4.0
 
 
 def unit_vector(v):
     v = np.asarray(v).reshape((2, -1))
     v_abs = np.linalg.norm(v, axis=0)
-    return np.divide(v, v_abs, where=v_abs>0., out=np.zeros_like(v)).squeeze()
+    return np.divide(v, v_abs, where=v_abs > 0.0, out=np.zeros_like(v)).squeeze()
 
 
-def nearest_point_on_ray(points, origin=(0., 0.), angle=PI_4, out=None):
+def nearest_point_on_ray(points, origin=(0.0, 0.0), angle=PI_4, out=None):
     """Find the nearest point on a ray.
 
     Parameters
@@ -34,14 +32,14 @@ def nearest_point_on_ray(points, origin=(0., 0.), angle=PI_4, out=None):
     if out is None:
         out = np.empty_like(points)
     out.shape = (2, -1)
-    out.fill(0.)
+    out.fill(0.0)
 
     u = points - origin
 
     u_bar = unit_vector(u)
     v_bar = np.asarray((np.cos(angle), np.sin(angle)))
 
-    v_dot_u = np.asarray(np.dot(v_bar, u_bar)).reshape((-1, ))
+    v_dot_u = np.asarray(np.dot(v_bar, u_bar)).reshape((-1,))
 
     close_to_line = v_dot_u > EPSILON
 
@@ -58,10 +56,16 @@ def nearest_point_on_ray(points, origin=(0., 0.), angle=PI_4, out=None):
 
 class PlumeCenterline(object):
 
-    N = .37
+    N = 0.37
 
-    def __init__(self, river_width, river_velocity=1., ocean_velocity=1.,
-                 river_angle=0., river_loc=(0., 0.)):
+    def __init__(
+        self,
+        river_width,
+        river_velocity=1.0,
+        ocean_velocity=1.0,
+        river_angle=0.0,
+        river_loc=(0.0, 0.0),
+    ):
         self._river_width = river_width
         self._river_angle = river_angle
         self._river_velocity = river_velocity
@@ -70,7 +74,7 @@ class PlumeCenterline(object):
         if self.is_straight:
             self._c = None
         else:
-            self._c = np.fabs(1.53 * .909 * river_velocity / ocean_velocity)
+            self._c = np.fabs(1.53 * 0.909 * river_velocity / ocean_velocity)
 
     @property
     def is_straight(self):
@@ -105,21 +109,36 @@ class PlumeCenterline(object):
         if self.is_straight:
             return y / np.tan(self.river_angle)
         else:
-            return (self.river_width * self._c *
-                    np.power(np.sign(self.ocean_velocity) * (y - self.y0) / self.river_width, self.N)) + self.x0
+            return (
+                self.river_width
+                * self._c
+                * np.power(
+                    np.sign(self.ocean_velocity) * (y - self.y0) / self.river_width,
+                    self.N,
+                )
+            ) + self.x0
 
     def y(self, x):
         if self.is_straight:
             return np.tan(self.river_angle) * x
         else:
-            return np.sign(self.ocean_velocity) * (self.river_width *
-                                                   np.power((x - self.x0) / self.river_width / self._c, 1. / self.N)) + self.y0
+            return (
+                np.sign(self.ocean_velocity)
+                * (
+                    self.river_width
+                    * np.power((x - self.x0) / self.river_width / self._c, 1.0 / self.N)
+                )
+                + self.y0
+            )
 
     def is_function_of_x(self):
         if self.is_straight:
             return np.fabs(np.cos(self.river_angle)) > 1e-12
 
-        if np.fabs(np.cos(self.river_angle)) <= 1e-12 or np.tan(self.river_angle) * self.ocean_velocity <= 0.:
+        if (
+            np.fabs(np.cos(self.river_angle)) <= 1e-12
+            or np.tan(self.river_angle) * self.ocean_velocity <= 0.0
+        ):
             return True
         else:
             return False
@@ -128,7 +147,10 @@ class PlumeCenterline(object):
         if self.is_straight:
             return np.fabs(np.sin(self.river_angle)) > 1e-12
 
-        if np.fabs(np.cos(self.river_angle)) <= 1e-12 or np.tan(self.river_angle) * self.ocean_velocity >= 0.:
+        if (
+            np.fabs(np.cos(self.river_angle)) <= 1e-12
+            or np.tan(self.river_angle) * self.ocean_velocity >= 0.0
+        ):
             return True
         else:
             return False
@@ -143,49 +165,60 @@ class PlumeCenterline(object):
             angle = self.river_angle
             shift = self.x0
         else:
-            angle = self.river_angle - np.pi * .5
+            angle = self.river_angle - np.pi * 0.5
             shift = self.y0
 
-        if self.ocean_velocity < 0.:
-            angle *= -1.
+        if self.ocean_velocity < 0.0:
+            angle *= -1.0
 
         if self.is_straight:
-            lengths[:] = np.abs(np.diff(bounds, axis=1) /
-                                np.cos(angle)).squeeze()
+            lengths[:] = np.abs(np.diff(bounds, axis=1) / np.cos(angle)).squeeze()
         else:
-            path_lengths(bounds - shift, self.river_width, self._c, self.N,
-                         angle, lengths)
+            path_lengths(
+                bounds - shift, self.river_width, self._c, self.N, angle, lengths
+            )
 
         return lengths
 
     def r(self, x, x0, y0):
-        return np.sqrt((x - x0) ** 2. + (self.y(x) - y0) ** 2.)
+        return np.sqrt((x - x0) ** 2.0 + (self.y(x) - y0) ** 2.0)
 
     @staticmethod
     def rotate_points(x, y, angle):
-        return (x * np.cos(angle) - y * np.sin(angle),
-                x * np.sin(angle) + y * np.cos(angle))
+        return (
+            x * np.cos(angle) - y * np.sin(angle),
+            x * np.sin(angle) + y * np.cos(angle),
+        )
 
     def nearest_point(self, points):
         from .ext.centerline import nearest_points
+
         points = np.asarray(points).reshape((-1, 2))
         nearest = np.empty_like(points)
 
         if self.is_straight:
-            nearest_point_on_ray(points.T, angle=self.river_angle,
-                                 origin=(self.x0, self.y0), out=nearest.T)
+            nearest_point_on_ray(
+                points.T,
+                angle=self.river_angle,
+                origin=(self.x0, self.y0),
+                out=nearest.T,
+            )
             return nearest
 
         angle = self.river_angle * np.sign(self.ocean_velocity)
 
-        nearest_points((points - (self.x0, self.y0)) *
-                       (1., np.sign(self.ocean_velocity)),
-                       self.river_width, self._c, self.N, angle, nearest)
+        nearest_points(
+            (points - (self.x0, self.y0)) * (1.0, np.sign(self.ocean_velocity)),
+            self.river_width,
+            self._c,
+            self.N,
+            angle,
+            nearest,
+        )
 
-        return nearest * (1., np.sign(self.ocean_velocity)) + (self.x0, self.y0)
+        return nearest * (1.0, np.sign(self.ocean_velocity)) + (self.x0, self.y0)
 
     def distance_to(self, points):
         points_on_centerline = self.nearest_point(points)
-        distance = np.sqrt(np.power(points_on_centerline -
-                                    points, 2).sum(axis=1))
+        distance = np.sqrt(np.power(points_on_centerline - points, 2).sum(axis=1))
         return distance
