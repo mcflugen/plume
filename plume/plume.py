@@ -13,6 +13,105 @@ SQRT_TWO = np.sqrt(2.0)
 SECONDS_PER_DAY = 60 * 60 * 24.0
 
 
+from collections import namedtuple, UserDict
+
+
+FieldInfo = namedtuple(
+    "FieldInfo", ["dtype", "intent", "optional", "units", "mapping", "doc" ]
+)
+
+
+class ChoiceError(Exception):
+    def __init__(self, value, choices):
+        self.value = value
+        self.choices = list(choices)
+
+    def __str__(self):
+        return "{value} is not one of {choices}".format(
+            value=repr(self.value),
+            choices=", ".join([repr(choice) for choice in self.choices]),
+        )
+
+
+class FieldInfo(UserDict):
+    # def __init__(self, name, dtype="float", intent="inout", optional=False, units="", mapping="node", doc=""):
+    def __init__(self, *args, **kwds):
+        info = dict(*args, **kwds)
+
+        self.data = {
+            "name": info.get("name", None),
+            "dtype": self._validate_dtype(info.get("dtype", float)),
+            "intent": self._validate_intent(info.get("intent", "in")),
+            "optional": self._validate_optional(info.get("optional", False)),
+            "units": info.get("units", ""),
+            "mapping": self._validate_mapping(info.get("mapping", "node")),
+            "doc": info.get("doc", ""),
+        }
+
+        if info.keys() - self.data.keys():
+            raise ValueError(
+                "unknown keywords ({0})".format(
+                    ", ".join([repr(key) for key in info.keys() - self.data.keys()])
+                )
+            )
+
+    @property
+    def name(self):
+        return self.data["name"]
+
+    @property
+    def intent(self):
+        return self.data["intent"]
+
+    def _validate_intent(self, intent):
+        valid_intents = ["in", "out", "inout"]
+        if intent not in valid_intents:
+            raise ChoiceError(intent, valid_intents)
+        return intent
+
+    @property
+    def optional(self):
+        return self.data["optional"]
+
+    def _validate_optional(self, optional):
+        if optional not in (True, False):
+            raise ChoiceError(optional, (True, False))
+        return optional
+
+    @property
+    def dtype(self):
+        return self.data["dtype"]
+
+    def _validate_dtype(self, dtype):
+        try:
+            return str(np.dtype(dtype))
+        except ValueError:
+            raise ValueError("invalid value for 'dtype'")
+
+    @property
+    def units(self):
+        return self.data["units"]
+
+    @property
+    def mapping(self):
+        return self.data["mapping"]
+
+    def _validate_mapping(self, mapping):
+        valid_mappings = ["node", "link", "patch", "corner", "face", "cell", "grid"]
+        if mapping not in valid_mappings:
+            raise ChoiceError(mapping, valid_mappings)
+
+    @property
+    def doc(self):
+        return self.data["doc"]
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError("FieldInfo is read-only")
+
+    def __delitem__(self, key, value):
+        raise NotImplementedError("FieldInfo is read-only")
+
+
 class Plume(Component):
 
     _name = "Plume"
@@ -56,6 +155,62 @@ class Plume(Component):
         "sediment_deposit__thickness": "amount of sediment deposited by the plume",
         "sediment__removal_rate": "removal rate of sediment carried by the plume",
         "sediment__bulk_density": "bulk density of sediment deposited by the plume",
+    }
+
+    _info = {
+        "sediment__removal_rate": FieldInfo(
+            dtype=float,
+            intent="in",
+            optional=False,
+            units="1 / d",
+            mapping="grid",
+            doc="removal rate of sediment carried by the plume",
+        ),
+        "sediment__bulk_density": FieldInfo(
+            dtype=float,
+            intent="in",
+            optional=False,
+            units="kg / m^3",
+            mapping="grid",
+            doc="bulk density of sediment deposited by the plume",
+        ),
+        "channel_exit_water_flow__speed": FieldInfo(
+            dtype=float,
+            intent="in",
+            optional=False,
+            units="m / s",
+            mapping="grid",
+            doc="flow velocity at the river mouth",
+        ),
+        "channel_exit__width": FieldInfo(
+            dtype=float,
+            intent="in",
+            optional=False,
+            units="m",
+            mapping="grid",
+            doc="channel width at the river mouth",
+        ),
+        "tracer~conservative__mass_concentration": FieldInfo(
+            dtype=float,
+            intent="out",
+            units="kg / m^3",
+            mapping="node",
+            doc="concentration of a conservative tracer",
+        ),
+        "sediment~suspended__mass_concentration": FieldInfo(
+            dtype=float,
+            intent="out",
+            units="kg / m^3",
+            mapping="node",
+            doc="concentration of suspended sediment in the plume",
+        ),
+        "sediment_deposit__thickness": FieldInfo(
+            dtype=float,
+            intent="out",
+            units="m",
+            mapping="node",
+            doc="amount of sediment deposited by the plume",
+        ),
     }
 
     PLUG_WIDTH = 5.17605
@@ -203,6 +358,22 @@ class Plume(Component):
         finally:
             return self._centerline
 
+    def _calc_centerline(
+        self,
+        river_width,
+        river_velocity,
+        river_angle,
+        xy_of_river,
+        ocean_velocity,
+    ):
+        return PlumeCenterline(
+            river_width,
+            river_velocity=river_velocity,
+            ocean_velocity=ocean_velocity,
+            river_angle=river_angle,
+            river_loc=xy_of_river,
+        )
+
     @property
     def ocean_sed_concentration(self):
         return 0.0
@@ -265,6 +436,8 @@ class Plume(Component):
 
     def calc_concentration(self):
         """Calculate the concentration of a conservative tracer."""
+        # depends on:
+        # *  river_width
         conc = self.grid.at_node["tracer~conservative__mass_concentration"]
         conc.fill(0.0)
 
@@ -299,6 +472,10 @@ class Plume(Component):
         return conc
 
     def calc_sediment_concentration(self, removal_rate):
+        # depends on:
+        # *  removal_rate
+        # *  river_velocity
+        # *  ocean_sed_concentration
         # removal_rate /= SECONDS_PER_DAY
 
         conc_sed = self.grid.at_node["sediment~suspended__mass_concentration"]
@@ -328,6 +505,9 @@ class Plume(Component):
         return conc_sed
 
     def calc_deposit_thickness(self, removal_rate):
+        # depends on:
+        # *  bulk_density
+        # *  removal_rate
         deposit = self.grid.at_node["sediment_deposit__thickness"]
         deposit.fill(0.0)
 
