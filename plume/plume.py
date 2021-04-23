@@ -13,11 +13,10 @@ SQRT_TWO = np.sqrt(2.0)
 SECONDS_PER_DAY = 60 * 60 * 24.0
 
 
-from collections import namedtuple, UserDict
-
+from collections import UserDict, namedtuple
 
 FieldInfo = namedtuple(
-    "FieldInfo", ["dtype", "intent", "optional", "units", "mapping", "doc" ]
+    "FieldInfo", ["dtype", "intent", "optional", "units", "mapping", "doc"]
 )
 
 

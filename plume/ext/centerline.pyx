@@ -1,9 +1,9 @@
 import numpy as np
-cimport numpy as np
-cimport cython
 
+cimport cython
+cimport numpy as np
 from cython_gsl cimport *
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport free, malloc
 
 # cdef extern from "stdlib.h":
 #     void *malloc(size_t size)

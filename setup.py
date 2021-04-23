@@ -14,10 +14,16 @@ setup(
     author_email="huttone@colorado.edu",
     url="http://csdms.colorado.edu",
     install_requires=open("requirements.txt", "r").read().splitlines(),
-    setup_requires=["setuptools",],
+    setup_requires=[
+        "setuptools",
+    ],
     packages=find_packages(),
     include_dirs=[np.get_include(), cython_gsl.get_include()],
-    entry_points={"console_scripts": ["plume=plume.cli:plume",],},
+    entry_points={
+        "console_scripts": [
+            "plume=plume.cli:plume",
+        ],
+    },
     ext_modules=[
         Extension(
             "plume.ext.centerline",

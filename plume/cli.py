@@ -18,7 +18,11 @@ err = partial(click.secho, fg="red", err=True)
 
 
 DEFAULT_PARAMS = {
-    "grid": {"shape": [50, 100], "spacing": [100.0, 100.0], "origin": [0.0, 0.0],},
+    "grid": {
+        "shape": [50, 100],
+        "spacing": [100.0, 100.0],
+        "origin": [0.0, 0.0],
+    },
     "river": {
         "width": 200.0,
         "depth": 1.0,
@@ -26,8 +30,14 @@ DEFAULT_PARAMS = {
         "location": [0.0, 0.0],
         "angle": 0.0,
     },
-    "sediment": {"removal_rate": 60.0, "bulk_density": 1600.0,},
-    "ocean": {"along_shore_velocity": 0.1, "sediment_concentration": 0.0,},
+    "sediment": {
+        "removal_rate": 60.0,
+        "bulk_density": 1600.0,
+    },
+    "ocean": {
+        "along_shore_velocity": 0.1,
+        "sediment_concentration": 0.0,
+    },
 }
 
 
