@@ -1,0 +1,5 @@
+black
+isort
+cython
+cythongsl
+numpy
