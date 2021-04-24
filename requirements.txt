@@ -2,3 +2,6 @@ scipy
 numpy
 pyyaml
 landlab
+cython
+cythongsl
+# c-compiler
