@@ -99,6 +99,7 @@ class FieldInfo(UserDict):
         valid_mappings = ["node", "link", "patch", "corner", "face", "cell", "grid"]
         if mapping not in valid_mappings:
             raise ChoiceError(mapping, valid_mappings)
+        return mapping
 
     @property
     def doc(self):
@@ -272,26 +273,24 @@ class Plume(Component):
         # self._sediment_removal_rate = sediment_removal_rate
         # self._sediment_bulk_density = sediment_bulk_density
 
-        super(Plume, self).__init__(grid, **kwds)
-
-        for name in self._input_var_names + self._output_var_names:
-            if self._var_mapping[name] == "grid":
-                self.grid.at_grid[name] = 0.0
-            else:
-                try:
-                    self.grid.add_zeros(
-                        name,
-                        at=self._var_mapping[name],
-                        units=self._var_units[name],
-                        noclobber=True,
-                    )
-                except FieldError:
-                    pass
-
         self.grid.at_grid["sediment__removal_rate"] = sediment_removal_rate
         self.grid.at_grid["sediment__bulk_density"] = sediment_bulk_density
         self.grid.at_grid["channel_exit_water_flow__speed"] = river_velocity
         self.grid.at_grid["channel_exit__width"] = river_width
+
+        super(Plume, self).__init__(grid)
+
+        for name in (
+            "sediment_deposit__thickness",
+            "sediment~suspended__mass_concentration",
+            "tracer~conservative__mass_concentration",
+        ):
+            self.grid.add_zeros(
+                name,
+                at=self._info[name].mapping,
+                units=self._info[name].units,
+                clobber=False,
+            )
 
         self._albertson_velocity = self.grid.zeros(at="node")
 
@@ -575,12 +574,10 @@ class Plume(Component):
             return self._zones
 
     def calc_nearest_centerline_point(self):
-        return self.centerline.nearest_point(
-            zip(self.grid.x_of_node, self.grid.y_of_node)
-        )
+        return self.centerline.nearest_point(self.grid.xy_of_node)
 
     def calc_distance_to_centerline(self):
-        xy_at_node = zip(self.grid.x_of_node, self.grid.y_of_node)
+        xy_at_node = self.grid.xy_of_node
         return np.sqrt(
             np.power(self.xy_at_nearest_centerline - xy_at_node, 2).sum(axis=1)
         )
