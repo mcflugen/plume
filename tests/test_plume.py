@@ -11,7 +11,8 @@ from plume import Plume
 
 def test_caching():
     """Test caching."""
-    grid = RasterModelGrid((500, 500), spacing=(100.0, 100.0))
+    grid = RasterModelGrid((500, 500), xy_spacing=(100.0, 100.0))
+
     params = {
         "river_velocity": 2.5,
         "river_width": 50.0,
@@ -47,13 +48,14 @@ def test_change_velocity():
     conc = {}
 
     params["river_velocity"] = 2.5
-    grid = RasterModelGrid((500, 500), spacing=(100.0, 100.0))
+    grid = RasterModelGrid((500, 500), xy_spacing=(100.0, 100.0))
+
     plume = Plume(grid, **params)
     plume.run_one_step()
     conc[2.5] = grid.at_node["sediment~suspended__mass_concentration"].copy()
 
     params["river_velocity"] = 0.5
-    grid = RasterModelGrid((500, 500), spacing=(100.0, 100.0))
+    grid = RasterModelGrid((500, 500), xy_spacing=(100.0, 100.0))
     plume = Plume(grid, **params)
     plume.run_one_step()
     conc[0.5] = grid.at_node["sediment~suspended__mass_concentration"].copy()
