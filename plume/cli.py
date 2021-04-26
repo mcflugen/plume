@@ -3,6 +3,7 @@ import argparse
 import os
 from collections import defaultdict
 from io import StringIO
+from functools import partial
 
 import click
 import numpy as np
