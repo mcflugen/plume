@@ -1,8 +1,5 @@
-from ._version import get_versions
+from ._version import __version__
 from .plume import Plume
 
-__version__ = get_versions()["version"]
-del get_versions
 
-
-__all__ = ["Plume"]
+__all__ = ["__version__", "Plume"]
