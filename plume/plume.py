@@ -162,8 +162,7 @@ class Plume(Component):
             self._established_flow
         except AttributeError:
             self._established_flow = self.where_established_flow()
-        finally:
-            return self._established_flow
+        return self._established_flow
 
     @property
     def establishing_flow(self):
@@ -171,8 +170,7 @@ class Plume(Component):
             self._establishing_flow
         except AttributeError:
             self._establishing_flow = self.where_establishing_flow()
-        finally:
-            return self._establishing_flow
+        return self._establishing_flow
 
     @property
     def plug_flow(self):
@@ -180,8 +178,7 @@ class Plume(Component):
             self._plug_flow
         except AttributeError:
             self._plug_flow = self.where_plug_flow()
-        finally:
-            return self._plug_flow
+        return self._plug_flow
 
     @property
     def distance_to_river(self):
@@ -192,8 +189,7 @@ class Plume(Component):
                 np.power(self.grid.x_of_node - self.river.x0, 2)
                 + np.power(self.grid.y_of_node - self.river.y0, 2)
             )
-        finally:
-            return self._distance_to_river
+        return self._distance_to_river
 
     @property
     def concentration(self):
@@ -201,8 +197,7 @@ class Plume(Component):
             self._concentration
         except AttributeError:
             self._concentration = self.calc_concentration()
-        finally:
-            return self._concentration
+        return self._concentration
 
     def calc_concentration(self):
         """Calculate the concentration of a conservative tracer."""
@@ -305,8 +300,7 @@ class Plume(Component):
             self._xy_at_nearest_centerline
         except AttributeError:
             self._xy_at_nearest_centerline = self.calc_nearest_centerline_point()
-        finally:
-            return self._xy_at_nearest_centerline
+        return self._xy_at_nearest_centerline
 
     @property
     def distance_to_centerline(self):
@@ -314,8 +308,7 @@ class Plume(Component):
             self._distance_to_centerline
         except AttributeError:
             self._distance_to_centerline = self.calc_distance_to_centerline()
-        finally:
-            return self._distance_to_centerline
+        return self._distance_to_centerline
 
     @property
     def distance_along_centerline(self):
@@ -323,8 +316,7 @@ class Plume(Component):
             self._distance_along_centerline
         except AttributeError:
             self._distance_along_centerline = self.calc_distance_along_centerline()
-        finally:
-            return self._distance_along_centerline
+        return self._distance_along_centerline
 
     @property
     def zones(self):
@@ -332,8 +324,7 @@ class Plume(Component):
             self._zones
         except AttributeError:
             self._zones = self.calc_zones()
-        finally:
-            return self._zones
+        return self._zones
 
     def calc_nearest_centerline_point(self):
         return self._centerline.nearest_point(

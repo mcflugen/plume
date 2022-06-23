@@ -2,6 +2,7 @@
 import os
 import pathlib
 import sys
+import warnings
 from collections import defaultdict
 from functools import partial
 from io import StringIO
@@ -15,6 +16,7 @@ from landlab.io.netcdf import write_raster_netcdf
 from packaging.version import parse as parse_version
 from scipy import interpolate
 
+from ._version import __version__
 from .plume import Plume
 
 
@@ -33,37 +35,37 @@ out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg="red", err=True)
 
 
-class RiverParameters:
-    name = "river"
-    width = Parameter(
-        "width", default=50.0, valid=Range(0.0, max=None), help="river width", units="m",
-    )
-    filepath = Parameter(
-        "filepath", default="river.csv", valid=Path(exists=True, file_okay=True, dir_okay=False), help="river file",
-    )
-
-
-class SedimentParameters:
-    name = "sediment"
-    removal_rate = Parameter(
-    )
-    bulk_density = Parameter(
-    )
-
-
-class OceanParameters:
-    name = "ocean"
-    filepath = Parameter(
-        "filepath", default="ocean.csv", valid=CsvFile(exists=True, nrows="+", ncols=3), help="river file",
-    )
-
-
-class GridParameters:
-    name = "grid"
-    shape = Parameter("shape", [500, 500], valid=Array(length=2, dtype=int), help="number of grid rows and columns")
-    shape = Parameter("shape", [500, 500], valid=Length(2), help="number of grid rows and columns")
-    xy_spacing = Parameter("xy_spacing", [100.0, 100.0], valid=Length(2), help="spacing of grid columns and rows")
-    xy_of_lower_left = Parameter("xy_of_lower_left", [0.0, 0.0], valid=Length(2), help="coordinates of lower-left node of grid")
+# class RiverParameters:
+#     name = "river"
+#     width = Parameter(
+#         "width", default=50.0, valid=Range(0.0, max=None), help="river width", units="m",
+#     )
+#     filepath = Parameter(
+#         "filepath", default="river.csv", valid=Path(exists=True, file_okay=True, dir_okay=False), help="river file",
+#     )
+#
+#
+# class SedimentParameters:
+#     name = "sediment"
+#     removal_rate = Parameter(
+#     )
+#     bulk_density = Parameter(
+#     )
+#
+#
+# class OceanParameters:
+#     name = "ocean"
+#     filepath = Parameter(
+#         "filepath", default="ocean.csv", valid=CsvFile(exists=True, nrows="+", ncols=3), help="river file",
+#     )
+#
+#
+# class GridParameters:
+#     name = "grid"
+#     shape = Parameter("shape", [500, 500], valid=Array(length=2, dtype=int), help="number of grid rows and columns")
+#     shape = Parameter("shape", [500, 500], valid=Length(2), help="number of grid rows and columns")
+#     xy_spacing = Parameter("xy_spacing", [100.0, 100.0], valid=Length(2), help="spacing of grid columns and rows")
+#     xy_of_lower_left = Parameter("xy_of_lower_left", [0.0, 0.0], valid=Length(2), help="coordinates of lower-left node of grid")
 
 
 def load_config(file: Optional[TextIO] = None):
@@ -112,7 +114,10 @@ def load_config(file: Optional[TextIO] = None):
     that_version = parse_version(conf["_version"])
     if this_version.major != that_version.major:
         warnings.warn(
-            "possible version mismatch. file is version v{0}, but you are using plume v{1}".format(that_version, this_version)
+            "possible version mismatch. file is version v{0}, but you are using plume v{1}".format(
+                that_version, this_version
+            )
+        )
 
     return conf
 
@@ -135,7 +140,7 @@ def _contents_of_input_file(infile: str) -> str:
                     "version: {0}".format(__version__),
                     "Time [d], Width [m], Depth [m], Velocity [m/s]",
                 ]
-            )
+            ),
         ),
         "ocean": as_csv(
             [[0.0, 0.1, 0.0]],
@@ -144,7 +149,7 @@ def _contents_of_input_file(infile: str) -> str:
                     "version: {0}".format(__version__),
                     "Time [d], Along-shore velocity [m/s], Sediment Concentration [-]",
                 ]
-            )
+            ),
         ),
     }
 
@@ -319,7 +324,13 @@ def run(run_dir: str, dry_run: bool, verbose: bool) -> None:
             river.update()
             ocean.update()
 
-            write_raster_netcdf(output_file, plume.grid, time=day, append=True, attrs={"_version": __version__})
+            write_raster_netcdf(
+                output_file,
+                plume.grid,
+                time=day,
+                append=True,
+                attrs={"_version": __version__},
+            )
 
         out("💥 Finished! 💥")
         out("Output written to {0}".format(output_file))
@@ -336,7 +347,8 @@ def show(infile: str) -> None:
 
 @plume.command()
 @click.argument(
-    "dest", type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
+    "dest",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
 )
 def setup(dest: str) -> None:
     """Setup a folder of input files for a simulation."""
