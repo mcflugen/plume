@@ -68,7 +68,6 @@ class Plume(Component):
         river_loc=(0.0, 0.0),
         sediment_removal_rate=1.0,
         sediment_bulk_density=1600.0,
-        **kwds
     ):
         """Simulate a hypopycnal sediment plume.
 
@@ -112,7 +111,7 @@ class Plume(Component):
         self._sediment_removal_rate = sediment_removal_rate
         self._sediment_bulk_density = sediment_bulk_density
 
-        super(Plume, self).__init__(grid, **kwds)
+        super(Plume, self).__init__(grid)
 
         for name in self._input_var_names + self._output_var_names:
             if self._var_mapping[name] == "grid":
