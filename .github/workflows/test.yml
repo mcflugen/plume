@@ -33,15 +33,15 @@ jobs:
           channels: conda-forge
           channel-priority: true
 
+      - name: Install gsl
+        run: |
+          conda install mamba
+          mamba install gsl
+
       - name: Show conda installation info
         run: |
           conda info
           conda list
-
-      - name: Install and test richdem engine
-        run: |
-          conda install mamba
-          mamba install gsl
 
       - name: Build and install package
         run: |
