@@ -1,8 +1,12 @@
+import os
+import sys
 from distutils.core import setup
-from Cython.Distutils import Extension
-from Cython.Distutils import build_ext
+
 import cython_gsl
 import pkg_resources
+from Cython.Distutils import Extension, build_ext
+
+os.environ.setdefault("LIB_GSL", sys.prefix)
 
 
 setup(
