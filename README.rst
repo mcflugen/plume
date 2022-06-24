@@ -134,7 +134,7 @@ and *sediment concentration*.
 
     $ plume generate ocean.csv
 
-.. code:: csv
+.. code::
 
    # version: 0.2.0.dev0
    # Time [d], Along-shore velocity [m/s], Sediment Concentration [-]
@@ -151,7 +151,7 @@ and *river velocity*.
 
   $ plume generate river.csv
 
-.. code:: csv
+.. code::
 
   # version: 0.2.0.dev0
   # Time [d], Width [m], Depth [m], Velocity [m/s]
