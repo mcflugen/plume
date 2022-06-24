@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import os
 import pathlib
-import sys
+import textwrap
 import warnings
 from collections import defaultdict
 from functools import partial
@@ -11,7 +11,7 @@ from typing import Optional, TextIO
 import rich_click as click
 import numpy as np
 import yaml
-from landlab import RasterModelGrid, load_params
+from landlab import RasterModelGrid
 from landlab.io.netcdf import write_raster_netcdf
 from packaging.version import parse as parse_version
 from scipy import interpolate
@@ -19,6 +19,7 @@ from scipy import interpolate
 from ._version import __version__
 from .plume import Plume
 
+import tomlkit as tomllib
 
 click.rich_click.ERRORS_SUGGESTION = (
     "Try running the '--help' flag for more information."
@@ -132,8 +133,8 @@ def _contents_of_input_file(infile: str) -> str:
         return contents
 
     contents = {
-        "plume": yaml.dump(params, default_flow_style=False),
-        "river": as_csv(
+        "plume.toml": tomllib.dumps(dict(plume=params)),
+        "river.csv": as_csv(
             [[0.0, 50.0, 5.0, 1.5]],
             header=os.linesep.join(
                 [
@@ -142,7 +143,7 @@ def _contents_of_input_file(infile: str) -> str:
                 ]
             ),
         ),
-        "ocean": as_csv(
+        "ocean.csv": as_csv(
             [[0.0, 0.1, 0.0]],
             header=os.linesep.join(
                 [
@@ -173,9 +174,24 @@ def load_params_from_strings(values):
     return params
 
 
-@click.group()
+@click.group(chain=True)
 @click.version_option()
-def plume() -> None:
+@click.option(
+    "--cd",
+    default=".",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
+    help="chage to directory, then execute",
+)
+@click.option(
+    "-s",
+    "--silent",
+    is_flag=True,
+    help="Suppress status status messages, including the progress bar.",
+)
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Also emit status messages to stderr."
+)
+def plume(cd: str, silent: bool, verbose: bool) -> None:
     """Simulate a hypopycnal plume.
 
     ## Examples
@@ -192,7 +208,9 @@ def plume() -> None:
     $ plume run example
     ```
     """
-    pass  # pragma: no cover
+    if not silent and verbose:
+        out(f"run_dir = {cd!r}")
+    os.chdir(cd)
 
 
 class RiverTimeSeries:
@@ -261,29 +279,38 @@ class OceanTimeSeries:
 
 
 @plume.command()
-@click.option("-v", "--verbose", is_flag=True, help="Emit status messages to stderr.")
 @click.option("--dry-run", is_flag=True, help="Do not actually run the model")
-@click.argument(
-    "run_dir",
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
-)
-def run(run_dir: str, dry_run: bool, verbose: bool) -> None:
-    os.chdir(run_dir)
+@click.pass_context
+def run(ctx, dry_run: bool) -> None:
+    """Run the plume simulation on a set of input files.
 
-    params = load_params("plume.yaml")
-    if verbose:
-        out(yaml.dump(params, default_flow_style=False))
+    ## Examples
+
+    ```bash
+    $ mkdir example && cd example
+    $ plume setup
+    $ plume run
+    """
+    verbose = ctx.parent.params["verbose"]
+    silent = ctx.parent.params["silent"]
+
+    # params = load_params("plume.toml")
+    with open("plume.toml", "r") as fp:
+        params = tomllib.load(fp)
+
+    if verbose and not silent:
+        out("plume.toml = |")
+        out(textwrap.indent(tomllib.dumps(dict(plume=params)).strip(), prefix="  "))
+
+    params = params["plume"]
 
     if dry_run:
         out("Nothing to do. 😴")
     else:
         output_file = pathlib.Path(params["output"]["filepath"])
-        if output_file.exists() and not click.confirm(
-            "{0}: output file exists. ok to remove?".format(output_file)
-        ):
-            raise click.Abort()
-        else:
-            os.remove(output_file)
+        if output_file.exists():
+            err(f"{output_file}: output files exists")
+            click.Abort()
 
         grid = RasterModelGrid(
             params["grid"]["shape"],
@@ -335,26 +362,51 @@ def run(run_dir: str, dry_run: bool, verbose: bool) -> None:
         out("💥 Finished! 💥")
         out("Output written to {0}".format(output_file))
 
-    sys.exit(0)
-
-
-@plume.command()
-@click.argument("infile", type=click.Choice(["ocean", "plume", "river"]))
-def show(infile: str) -> None:
-    """Show example input files."""
-    print(_contents_of_input_file(infile))
+        print(output_file)
 
 
 @plume.command()
 @click.argument(
-    "dest",
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True),
+    "infile", type=click.Choice(sorted(["ocean.csv", "plume.toml", "river.csv"]))
 )
-def setup(dest: str) -> None:
-    """Setup a folder of input files for a simulation."""
-    folder = pathlib.Path(dest)
+def generate(infile: str) -> None:
+    """Print example input files.
 
-    files = [pathlib.Path(fname) for fname in ["ocean.csv", "plume.yaml", "river.csv"]]
+    ## Examples
+
+    To see an example *ocean.csv* input file,
+    ```bash
+    $ plume generate ocean.csv
+    ```
+    """
+    print(_contents_of_input_file(infile))
+
+
+@plume.command()
+@click.pass_context
+def setup(ctx) -> None:
+    """Setup a folder of input files for a simulation.
+
+    *plume setup* creates a set of example input files for the *plume* program.
+    This set of input files can then be used with the *plume run* command.
+
+    > **NOTE**: *plume setup* will not overwrite any of your files. If you want to overwrite
+    existing files, you will have to remove them yourself and then re-run
+    *plume setup*.
+
+    ## Examples
+
+    ```bash
+    $ mkdir _example
+    $ plume --cd=_example setup
+    ```
+    """
+    verbose = ctx.parent.params["verbose"]
+    silent = ctx.parent.params["silent"]
+
+    folder = pathlib.Path(".")
+
+    files = [pathlib.Path(fname) for fname in ["ocean.csv", "plume.toml", "river.csv"]]
 
     existing_files = [folder / name for name in files if (folder / name).exists()]
     if existing_files:
@@ -365,7 +417,10 @@ def setup(dest: str) -> None:
     else:
         for fname in files:
             with open(folder / fname, "w") as fp:
-                print(_contents_of_input_file(fname.stem), file=fp)
-        print(str(folder))
+                print(_contents_of_input_file(str(fname)), file=fp)
+        if verbose and not silent:
+            out(f"files = {[str(f) for f in files]!r}")
+        print(str(folder.absolute()))
 
-    sys.exit(len(existing_files))
+    if existing_files:
+        raise click.Abort()
