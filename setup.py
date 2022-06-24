@@ -6,11 +6,11 @@ import pkg_resources
 
 
 setup(
-    include_dirs = [
+    include_dirs=[
         cython_gsl.get_include(),
         pkg_resources.resource_filename("numpy", "core/include"),
     ],
-    cmdclass = {'build_ext': build_ext},
+    cmdclass={"build_ext": build_ext},
     ext_modules=[
         Extension(
             "plume.ext.centerline",

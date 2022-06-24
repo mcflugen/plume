@@ -230,7 +230,7 @@ class Plume(Component):
             SQRT_TWO * self.CONST_ALBERTSON * x[self.established_flow]
         )
         conc[self.established_flow] = np.sqrt(v1) * np.exp(-np.sqrt(v2))
-        u_albertson[self.established_flow] = np.sqrt(v1) * np.exp(-(v2 ** 2))
+        u_albertson[self.established_flow] = np.sqrt(v1) * np.exp(-(v2**2))
 
         return conc
 
