@@ -111,7 +111,7 @@ class Plume(Component):
         self._sediment_removal_rate = sediment_removal_rate
         self._sediment_bulk_density = sediment_bulk_density
 
-        super(Plume, self).__init__(grid)
+        super().__init__(grid)
 
         for name in self._input_var_names + self._output_var_names:
             if self._var_mapping[name] == "grid":

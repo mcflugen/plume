@@ -115,7 +115,7 @@ def load_config(file: Optional[TextIO] = None):
     that_version = parse_version(conf["_version"])
     if this_version.major != that_version.major:
         warnings.warn(
-            "possible version mismatch. file is version v{0}, but you are using plume v{1}".format(
+            "possible version mismatch. file is version v{}, but you are using plume v{}".format(
                 that_version, this_version
             )
         )
@@ -138,7 +138,7 @@ def _contents_of_input_file(infile: str) -> str:
             [[0.0, 50.0, 5.0, 1.5]],
             header=os.linesep.join(
                 [
-                    "version: {0}".format(__version__),
+                    f"version: {__version__}",
                     "Time [d], Width [m], Depth [m], Velocity [m/s]",
                 ]
             ),
@@ -147,7 +147,7 @@ def _contents_of_input_file(infile: str) -> str:
             [[0.0, 0.1, 0.0]],
             header=os.linesep.join(
                 [
-                    "version: {0}".format(__version__),
+                    f"version: {__version__}",
                     "Time [d], Along-shore velocity [m/s], Sediment Concentration [-]",
                 ]
             ),
@@ -295,7 +295,7 @@ def run(ctx, dry_run: bool) -> None:
     silent = ctx.parent.params["silent"]
 
     # params = load_params("plume.toml")
-    with open("plume.toml", "r") as fp:
+    with open("plume.toml") as fp:
         params = tomllib.load(fp)
 
     if verbose and not silent:
@@ -360,7 +360,7 @@ def run(ctx, dry_run: bool) -> None:
             )
 
         out("💥 Finished! 💥")
-        out("Output written to {0}".format(output_file))
+        out(f"Output written to {output_file}")
 
         print(output_file)
 

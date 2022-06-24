@@ -51,7 +51,7 @@ def nearest_point_on_ray(points, origin=(0.0, 0.0), angle=PI_4, out=None):
     return out.squeeze()
 
 
-class PlumeCenterline(object):
+class PlumeCenterline:
 
     N = 0.37
 

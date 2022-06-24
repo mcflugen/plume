@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 
-class River(object):
+class River:
     def __init__(self, velocity=1.0, width=1.0, depth=1.0, angle=0.0, loc=(0.0, 0.0)):
         self._velocity = velocity
         self._width = width
