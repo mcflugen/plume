@@ -7,7 +7,7 @@ import pkg_resources
 
 setup(
     include_dirs=[
-        cython_gsl.get_include(),
+        cython_gsl.get_include_dir(),
         pkg_resources.resource_filename("numpy", "core/include"),
     ],
     cmdclass={"build_ext": build_ext},
