@@ -67,6 +67,9 @@ testing = [
   "pytest-xdist",
   "pyyaml",
 ]
+notebook = [
+  "notebook",
+]
 
 
 [project.scripts]
