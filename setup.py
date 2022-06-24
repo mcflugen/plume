@@ -1,4 +1,5 @@
 import os
+import pathlib
 import sys
 from distutils.core import setup
 
@@ -6,7 +7,7 @@ import cython_gsl
 import pkg_resources
 from Cython.Distutils import Extension, build_ext
 
-os.environ.setdefault("LIB_GSL", sys.prefix)
+os.environ.setdefault("LIB_GSL", str(pathlib.Path(sys.prefix) / "Library"))
 
 
 setup(
