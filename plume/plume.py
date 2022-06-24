@@ -13,40 +13,48 @@ SECONDS_PER_DAY = 60 * 60 * 24.0
 class Plume(Component):
 
     _name = "Plume"
-
-    _input_var_names = (
-        "sediment__removal_rate",
-        "sediment__bulk_density",
-    )
-
-    _output_var_names = (
-        "tracer~conservative__mass_concentration",
-        "sediment~suspended__mass_concentration",
-        "sediment_deposit__thickness",
-    )
-
-    _var_units = {
-        "tracer~conservative__mass_concentration": "kg / m^3",
-        "sediment~suspended__mass_concentration": "kg / m^3",
-        "sediment_deposit__thickness": "m",
-        "sediment__removal_rate": "1 / d",
-        "sediment__bulk_density": "kg / m^3",
-    }
-
-    _var_mapping = {
-        "tracer~conservative__mass_concentration": "node",
-        "sediment~suspended__mass_concentration": "node",
-        "sediment_deposit__thickness": "node",
-        "sediment__removal_rate": "grid",
-        "sediment__bulk_density": "grid",
-    }
-
-    _var_doc = {
-        "tracer~conservative__mass_concentration": "concentration of a conservative tracer",
-        "sediment~suspended__mass_concentration": "concentration of suspended sediment in the plume",
-        "sediment_deposit__thickness": "amount of sediment deposited by the plume",
-        "sediment__removal_rate": "removal rate of sediment carried by the plume",
-        "sediment__bulk_density": "bulk density of sediment deposited by the plume",
+    _unit_agnostic = True
+    _info = {
+        "sediment__removal_rate": {
+            "dtype": "float",
+            "intent": "in",
+            "optional": False,
+            "units": "1 / d",
+            "mapping": "grid",
+            "doc": "removal rate of sediment carried by the plume",
+        },
+        "sediment__bulk_density": {
+            "dtype": "float",
+            "intent": "in",
+            "optional": False,
+            "units": "kg / m^3",
+            "mapping": "grid",
+            "doc": "bulk density of sediment deposited by the plume",
+        },
+        "tracer~conservative__mass_concentration": {
+            "dtype": "float",
+            "intent": "out",
+            "optional": False,
+            "units": "kg / m^3",
+            "mapping": "node",
+            "doc": "concentration of a conservative tracer",
+        },
+        "sediment~suspended__mass_concentration": {
+            "dtype": "float",
+            "intent": "out",
+            "optional": False,
+            "units": "kg / m^3",
+            "mapping": "node",
+            "doc": "concentration of suspended sediment in the plume",
+        },
+        "sediment_deposit__thickness": {
+            "dtype": "float",
+            "intent": "out",
+            "optional": False,
+            "units": "m",
+            "mapping": "node",
+            "doc": "amount of sediment deposited by the plume",
+        },
     }
 
     PLUG_WIDTH = 5.17605
