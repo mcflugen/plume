@@ -32,7 +32,7 @@ jobs:
     
           - name: Install dependencies
             run: |
-              pip install -e ".[notebook,dev]"
+              pip install -e ".[notebook,testing]"
 
           - name: Test notebooks
             run: pytest --nbmake notebooks/*ipynb            
