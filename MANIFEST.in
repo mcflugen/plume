@@ -1,2 +1,7 @@
-include versioneer.py
-include plume/_version.py
+include CHANGES.rst
+include plume/ext/centerline.c
+
+exclude requirements*.txt
+exclude requirements.py
+exclude notebooks/*.ipynb
+exclude Makefile

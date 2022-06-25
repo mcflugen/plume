@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
 
-class River(object):
-    def __init__(self, velocity=1., width=1., depth=1., angle=0., loc=(0., 0.)):
+class River:
+    def __init__(self, velocity=1.0, width=1.0, depth=1.0, angle=0.0, loc=(0.0, 0.0)):
         self._velocity = velocity
         self._width = width
         self._depth = depth
@@ -36,5 +36,3 @@ class River(object):
     @property
     def discharge(self):
         return self.velocity * self.width * self.depth
-
-
