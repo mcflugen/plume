@@ -181,7 +181,3 @@ You can now run the simulation:
 .. code:: bash
 
     $ plume --cd=example run
-    # Layer Thickness [m], Porosity [-]
-    100.0,0.5
-    96.18666488709239,0.4801774231522433
-    92.78860257194452,0.4611407154102571
