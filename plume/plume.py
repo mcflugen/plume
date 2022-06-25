@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import numpy as np
-from landlab import Component, FieldError
+from landlab import Component
 
 from .centerline import PlumeCenterline
 from .river import River
@@ -18,7 +18,7 @@ class Plume(Component):
         "sediment__removal_rate": {
             "dtype": "float",
             "intent": "in",
-            "optional": False,
+            "optional": True,
             "units": "1 / d",
             "mapping": "grid",
             "doc": "removal rate of sediment carried by the plume",
@@ -26,7 +26,7 @@ class Plume(Component):
         "sediment__bulk_density": {
             "dtype": "float",
             "intent": "in",
-            "optional": False,
+            "optional": True,
             "units": "kg / m^3",
             "mapping": "grid",
             "doc": "bulk density of sediment deposited by the plume",
@@ -119,24 +119,18 @@ class Plume(Component):
         self._sediment_removal_rate = sediment_removal_rate
         self._sediment_bulk_density = sediment_bulk_density
 
-        super().__init__(grid)
-
-        for name in self._input_var_names + self._output_var_names:
-            if self._var_mapping[name] == "grid":
-                self.grid.at_grid[name] = 0.0
-            else:
-                try:
-                    self.grid.add_zeros(
-                        name,
-                        at=self._var_mapping[name],
-                        units=self._var_units[name],
-                        clobber=False,
-                    )
-                except FieldError:
-                    pass
-
         self.grid.at_grid["sediment__removal_rate"] = sediment_removal_rate
         self.grid.at_grid["sediment__bulk_density"] = sediment_bulk_density
+
+        for name in (
+            "tracer~conservative__mass_concentration",
+            "sediment~suspended__mass_concentration",
+            "sediment_deposit__thickness",
+        ):
+            if name not in self.grid.at_node:
+                self.grid.add_empty(name, at="node")
+
+        super().__init__(grid)
 
         self._albertson_velocity = self.grid.zeros(at="node")
 
