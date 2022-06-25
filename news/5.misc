@@ -1,0 +1,4 @@
+Set up continuous integration workflows using GitHub Actions. CI tests include
+testing for code style using *black*, checking for lint with *flake8*,
+testing notebooks and running the test suite.
+
