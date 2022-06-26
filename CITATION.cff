@@ -1,0 +1,26 @@
+# YAML 1.2
+cff-version: 1.2.0
+title: sed-plume
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+abstract: "A hypopycnal sediment plume model built with landlab"
+type: software
+authors:
+  - given-names: Eric
+    family-names: Hutton
+    email: mcflugen@gmail.com
+    affiliation: University of Colorado
+    orcid: 'https://orcid.org/0000-0002-5864-6459'
+repository-code: "https://github.com/mcflugen/plume"
+url: https://github.com/mcflugen/plume#readme
+date-released: "2021-06-26"
+keywords:
+  - "bmi"
+  - "component modeling"
+  - "earth science"
+  - "hypopycnal plume"
+  - "landlab"
+  - "model coupling"
+  - "numerical modeling"
+license: MIT
