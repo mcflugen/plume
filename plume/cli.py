@@ -91,7 +91,7 @@ def load_config(file: Optional[TextIO] = None):
             "xy_of_lower_left": [0.0, 0.0],
         },
         "river": {
-            # "filepath": "river.csv",
+            "filepath": "river.csv",
             "width": 50.0,
             "depth": 5.0,
             "velocity": 1.5,
@@ -100,7 +100,7 @@ def load_config(file: Optional[TextIO] = None):
         },
         "sediment": {"removal_rate": 60.0, "bulk_density": 1600.0},
         "ocean": {
-            # "filepath": "ocean.csv",
+            "filepath": "ocean.csv",
             "along_shore_velocity": 0.1,
             "sediment_concentration": 0.0,
         },
@@ -134,24 +134,24 @@ def _contents_of_input_file(infile: str) -> str:
 
     contents = {
         "plume.toml": tomllib.dumps(dict(plume=params)),
-        # "river.csv": as_csv(
-        #     [[0.0, 50.0, 5.0, 1.5]],
-        #     header=os.linesep.join(
-        #         [
-        #             f"version: {__version__}",
-        #             "Time [d], Width [m], Depth [m], Velocity [m/s]",
-        #         ]
-        #     ),
-        # ),
-        # "ocean.csv": as_csv(
-        #     [[0.0, 0.1, 0.0]],
-        #     header=os.linesep.join(
-        #         [
-        #             f"version: {__version__}",
-        #             "Time [d], Along-shore velocity [m/s], Sediment Concentration [-]",
-        #         ]
-        #     ),
-        # ),
+        "river.csv": as_csv(
+            [[0.0, 50.0, 5.0, 1.5]],
+            header=os.linesep.join(
+                [
+                    f"version: {__version__}",
+                    "Time [d], Width [m], Depth [m], Velocity [m/s]",
+                ]
+            ),
+        ),
+        "ocean.csv": as_csv(
+            [[0.0, 0.1, 0.0]],
+            header=os.linesep.join(
+                [
+                    f"version: {__version__}",
+                    "Time [d], Along-shore velocity [m/s], Sediment Concentration [-]",
+                ]
+            ),
+        ),
     }
 
     return contents[infile]
@@ -310,7 +310,7 @@ def run(ctx, dry_run: bool) -> None:
         output_file = pathlib.Path(params["output"]["filepath"])
         if output_file.exists():
             err(f"{output_file}: output files exists")
-            raise click.Abort()
+            click.Abort()
 
         grid = RasterModelGrid(
             params["grid"]["shape"],
@@ -318,36 +318,46 @@ def run(ctx, dry_run: bool) -> None:
             xy_of_lower_left=params["grid"]["xy_of_lower_left"],
         )
 
-        grid.add_zeros("sediment_deposit_thickenss", at="node")  # .reshape(grid.shape)
+        deposit = grid.add_zeros("sediment_deposit_thickenss", at="node").reshape(
+            grid.shape
+        )
         grid.at_grid["sediment__removal_rate"] = params["sediment"]["removal_rate"]
         grid.at_grid["sediment__bulk_density"] = params["sediment"]["bulk_density"]
 
-        # river = RiverTimeSeries(params["river"]["filepath"])
-        # ocean = OceanTimeSeries(params["ocean"]["filepath"])
+        river = RiverTimeSeries(params["river"]["filepath"])
+        ocean = OceanTimeSeries(params["ocean"]["filepath"])
 
         params["river"]["angle"] = np.deg2rad(params["river"]["angle"])
 
-        # n_days = 2
-        # for day in range(n_days):
+        n_days = 2
+        for day in range(n_days):
 
-        plume = Plume(
-            grid,
-            river_width=params["river"]["width"],
-            river_depth=params["river"]["depth"],
-            river_velocity=params["river"]["velocity"],
-            river_angle=params["river"]["angle"],
-            river_loc=params["river"]["location"],
-            ocean_velocity=params["ocean"]["along_shore_velocity"],
-        )
-        plume.run_one_step()
+            grid = RasterModelGrid((500, 500), xy_spacing=(100.0, 100.0))
+            plume = Plume(
+                grid,
+                river_width=river.width,
+                river_depth=river.depth,
+                river_velocity=river.velocity,
+                river_angle=params["river"]["angle"],
+                river_loc=params["river"]["location"],
+                ocean_velocity=ocean.velocity,
+            )
+            plume.run_one_step()
 
-        write_raster_netcdf(
-            output_file,
-            plume.grid,
-            time=0.0,
-            append=True,
-            attrs={"_version": __version__},
-        )
+            deposit[:] += plume.calc_deposit_thickness(
+                params["sediment"]["removal_rate"]
+            )
+
+            river.update()
+            ocean.update()
+
+            write_raster_netcdf(
+                output_file,
+                plume.grid,
+                time=day,
+                append=True,
+                attrs={"_version": __version__},
+            )
 
         out("💥 Finished! 💥")
         out(f"Output written to {output_file}")
@@ -356,7 +366,9 @@ def run(ctx, dry_run: bool) -> None:
 
 
 @plume.command()
-@click.argument("infile", type=click.Choice(sorted(["plume.toml"])))
+@click.argument(
+    "infile", type=click.Choice(sorted(["ocean.csv", "plume.toml", "river.csv"]))
+)
 def generate(infile: str) -> None:
     """Print example input files.
 
@@ -394,7 +406,7 @@ def setup(ctx) -> None:
 
     folder = pathlib.Path(".")
 
-    files = [pathlib.Path(fname) for fname in ["plume.toml"]]
+    files = [pathlib.Path(fname) for fname in ["ocean.csv", "plume.toml", "river.csv"]]
 
     existing_files = [folder / name for name in files if (folder / name).exists()]
     if existing_files:
