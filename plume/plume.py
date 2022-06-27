@@ -49,7 +49,7 @@ class Plume(Component):
         },
         "sediment_deposit__thickness": {
             "dtype": "float",
-            "intent": "out",
+            "intent": "inout",
             "optional": False,
             "units": "m",
             "mapping": "node",
@@ -125,10 +125,11 @@ class Plume(Component):
         for name in (
             "tracer~conservative__mass_concentration",
             "sediment~suspended__mass_concentration",
-            "sediment_deposit__thickness",
         ):
             if name not in self.grid.at_node:
                 self.grid.add_empty(name, at="node")
+        if "sediment_deposit__thickness" not in self.grid.at_node:
+            self.grid.add_zeros("sediment_deposit__thickness", at="node")
 
         super().__init__(grid)
 
@@ -264,8 +265,13 @@ class Plume(Component):
 
         return conc_sed
 
-    def calc_deposit_thickness(self, removal_rate):
-        deposit = self.grid.at_node["sediment_deposit__thickness"]
+    def calc_deposit_thickness(self, removal_rate, out=None):
+        if out is None:
+            out = self.grid.zeros(at="node")
+
+        deposit = out.reshape(self.grid.shape)
+
+        # deposit = self.grid.at_node["sediment_deposit__thickness"]
         deposit.fill(0.0)
 
         bulk_density = self.grid.at_grid["sediment__bulk_density"]
@@ -279,7 +285,7 @@ class Plume(Component):
         u_albertson = (
             self._albertson_velocity.reshape(self.grid.shape) * self.river.velocity
         )
-        deposit = deposit.reshape(self.grid.shape)
+        # deposit = deposit.reshape(self.grid.shape)
 
         # inds = np.where((conc_sed >= ocean_cw) & (u_albertson > 0.05))
         inds = np.where(
@@ -294,7 +300,7 @@ class Plume(Component):
             / (bulk_density * dl)
         )
 
-        return deposit
+        return out
 
     @property
     def xy_at_nearest_centerline(self):
@@ -416,5 +422,7 @@ class Plume(Component):
             needs_updating = True
 
         if needs_updating:
-            self.calc_deposit_thickness(removal_rate)
+            deposit = self.calc_deposit_thickness(removal_rate)
+            self.grid.at_node["sediment_deposit__thickness"] += deposit
+
             self._removal_rate = removal_rate
