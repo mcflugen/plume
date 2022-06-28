@@ -1,4 +1,0 @@
-Fixed a bug where the existing deposit thickness was being zeroed-out before
-the plume was run. The plume now adds sediment to an existing deposit and
-leaves it up to the user to clear an existing deposit.
-
