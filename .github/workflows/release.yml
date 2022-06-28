@@ -64,7 +64,7 @@ jobs:
       - name: Build source distribution
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pip install numpy
+          pip install numpy cython cythongsl
           python setup.py sdist --dist-dir wheelhouse
           twine upload --skip-existing wheelhouse/*.tar.gz
 
