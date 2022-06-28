@@ -48,6 +48,8 @@ jobs:
       - name: Install cibuildwheel
         run: |
           conda install pip
+          conda install gsl
+          pip install --upgrade pip wheel setuptools
           python --version
           pip --version
           python -m pip install cibuildwheel==2.3.0 twine
