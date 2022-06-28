@@ -66,10 +66,10 @@ jobs:
           python setup.py sdist --dist-dir wheelhouse
           twine upload --skip-existing wheelhouse/*.tar.gz
 
-      - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
+      # - name: Build wheels
+      #   run: python -m cibuildwheel --output-dir wheelhouse
 
-      - name: Upload distributions
-        run: |
-          twine upload --skip-existing wheelhouse/*.whl
+      # - name: Upload distributions
+      #   run: |
+      #     twine upload --skip-existing wheelhouse/*.whl
 
