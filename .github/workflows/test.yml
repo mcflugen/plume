@@ -57,6 +57,15 @@ jobs:
           python -c 'import plume; print(plume.__version__)'
           pytest --cov=plume --cov-report=xml:$(pwd)/coverage.xml -vvv -n auto
 
+      - name: Test command line
+        run: |
+          plume --version
+          plume --help
+          plume generate --help
+          plume setup --help
+          plume run --help
+          plume generate plume.toml
+
       - name: Coveralls
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
         uses: AndreMiras/coveralls-python-action@v20201129
