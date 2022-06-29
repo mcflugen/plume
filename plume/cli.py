@@ -175,7 +175,7 @@ def load_params_from_strings(values):
 
 
 @click.group(chain=True)
-@click.version_option()
+@click.version_option(package_name="sed-plume")
 @click.option(
     "--cd",
     default=".",
