@@ -4,6 +4,16 @@ Release Notes
 
 .. towncrier release notes start
 
+0.2.1 (2022-06-29)
+------------------
+
+Bug Fixes
+`````````
+
+- Fixed an error when trying to get the version from the command line with
+  ``plume --version```. (`#9 <https://github.com/mcflugen/plume/issues/9>`_)
+
+
 0.2.0 (2022-06-28)
 ------------------
 
