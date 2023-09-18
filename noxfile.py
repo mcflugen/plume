@@ -23,7 +23,7 @@ def test(session: nox.Session) -> None:
         "--file=requirements-testing.txt",
         channel=["nodefaults", "conda-forge"],
     )
-    session.install(".", "--no-deps")
+    session.install("-e", ".", "--no-deps")
 
     session.run("pytest", "--cov=src/plume", "-vvv")
     session.run("coverage", "report", "--ignore-errors", "--show-missing")
