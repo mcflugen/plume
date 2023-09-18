@@ -4,7 +4,6 @@ include plume/ext/centerline.c
 
 exclude .pre-commit-config.yaml
 exclude requirements*.txt
-exclude requirements.py
 exclude notebooks/*.ipynb
-exclude Makefile
+exclude noxfile.py
 recursive-exclude news *
