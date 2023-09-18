@@ -14,7 +14,7 @@ ctypedef double * double_ptr
 ctypedef void * void_ptr
 
 
-cdef double f(double x, void * params) nogil:
+cdef double f(double x, void * params) noexcept nogil:
     cdef double x0 = (<double_ptr> params)[0]
     cdef double y0 = (<double_ptr> params)[1]
     cdef double w = (<double_ptr> params)[2]
@@ -91,7 +91,7 @@ cdef double centerline_x(double y, double rw, double c, double n) nogil:
 
 
 @cython.cdivision(True)
-cdef double g(double x, void * params) nogil:
+cdef double g(double x, void * params) noexcept nogil:
     cdef double w = (<double_ptr> params)[0]
     cdef double c = (<double_ptr> params)[1]
     cdef double n = (<double_ptr> params)[2]
