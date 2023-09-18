@@ -17,9 +17,13 @@ def install(session: nox.Session) -> None:
 @nox.session(venv_backend="mamba")
 def test(session: nox.Session) -> None:
     """Run the tests."""
-    install(session)
-
-    session.conda_install("--file=requirements-testing.txt")
+    session.conda_install(
+        "gsl",
+        "--file=requirements.txt",
+        "--file=requirements-testing.txt",
+        channel=["nodefaults", "conda-forge"],
+    )
+    session.install(".", "--no-deps")
 
     session.run("pytest", "--cov=src/plume", "-vvv")
     session.run("coverage", "report", "--ignore-errors", "--show-missing")
@@ -147,7 +151,7 @@ def publish_pypi(session):
 @nox.session(python=False)
 def clean(session):
     """Remove all .venv's, build files and caches in the directory."""
-    PROJECT = "plume"
+    PROJECT = "sed_plume"
     ROOT = pathlib.Path(__file__).parent
 
     shutil.rmtree("build", ignore_errors=True)
@@ -155,7 +159,12 @@ def clean(session):
     shutil.rmtree(f"src/{PROJECT}.egg-info", ignore_errors=True)
     shutil.rmtree(".pytest_cache", ignore_errors=True)
     shutil.rmtree(".venv", ignore_errors=True)
-    for p in chain(ROOT.rglob("*.py[co]"), ROOT.rglob("__pycache__")):
+    for p in chain(
+        ROOT.rglob("*.c"),
+        ROOT.rglob("*.py[co]"),
+        ROOT.rglob("*.so"),
+        ROOT.rglob("__pycache__"),
+    ):
         if p.is_dir():
             p.rmdir()
         else:
