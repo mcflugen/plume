@@ -52,7 +52,6 @@ def nearest_point_on_ray(points, origin=(0.0, 0.0), angle=PI_4, out=None):
 
 
 class PlumeCenterline:
-
     N = 0.37
 
     def __init__(

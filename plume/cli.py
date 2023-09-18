@@ -8,8 +8,9 @@ from functools import partial
 from io import StringIO
 from typing import Optional, TextIO
 
-import rich_click as click
 import numpy as np
+import rich_click as click
+import tomlkit as tomllib
 import yaml
 from landlab import RasterModelGrid
 from landlab.io.netcdf import write_raster_netcdf
@@ -18,8 +19,6 @@ from scipy import interpolate
 
 from ._version import __version__
 from .plume import Plume
-
-import tomlkit as tomllib
 
 click.rich_click.ERRORS_SUGGESTION = (
     "Try running the '--help' flag for more information."

@@ -11,7 +11,6 @@ SECONDS_PER_DAY = 60 * 60 * 24.0
 
 
 class Plume(Component):
-
     _name = "Plume"
     _unit_agnostic = True
     _info = {
