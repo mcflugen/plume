@@ -58,6 +58,8 @@ jobs:
           pytest --cov=plume --cov-report=xml:$(pwd)/coverage.xml -vvv -n auto
 
       - name: Test command line
+        env:
+          PYTHONIOENCODING: "utf-8"
         run: |
           plume --version
           plume --help
