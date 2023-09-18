@@ -8,14 +8,20 @@ ROOT = pathlib.Path(__file__).parent
 
 
 @nox.session(venv_backend="mamba")
-def test(session: nox.Session) -> None:
-    """Run the tests."""
-    session.conda_install(
-        "--file=requirements.txt", "--file=requirements-testing.txt", "gsl"
-    )
+def install(session: nox.Session) -> None:
+    """Install the package."""
+    session.conda_install("--file=requirements.txt", "gsl")
     session.install(".", "--no-deps")
 
-    session.run("pytest", "--cov=plume", "-vvv")
+
+@nox.session(venv_backend="mamba")
+def test(session: nox.Session) -> None:
+    """Run the tests."""
+    install(session)
+
+    session.conda_install("--file=requirements-testing.txt")
+
+    session.run("pytest", "--cov=src/plume", "-vvv")
     session.run("coverage", "report", "--ignore-errors", "--show-missing")
 
 
@@ -146,7 +152,7 @@ def clean(session):
 
     shutil.rmtree("build", ignore_errors=True)
     shutil.rmtree("wheelhouse", ignore_errors=True)
-    shutil.rmtree(f"{PROJECT}.egg-info", ignore_errors=True)
+    shutil.rmtree(f"src/{PROJECT}.egg-info", ignore_errors=True)
     shutil.rmtree(".pytest_cache", ignore_errors=True)
     shutil.rmtree(".venv", ignore_errors=True)
     for p in chain(ROOT.rglob("*.py[co]"), ROOT.rglob("__pycache__")):

@@ -77,16 +77,13 @@ notebook = [
 plume = "plume.cli:plume"
 
 
-[tool.setuptools.packages.find]
-where = ["."]
-
 [tool.setuptools.dynamic]
 readme = {file = ["README.rst", "AUTHORS.rst", "CHANGES.rst"]}
 version = {attr = "plume._version.__version__"}
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-testpaths = ["plume", "tests"]
+testpaths = ["src/plume", "tests"]
 norecursedirs = [".*", "*.egg*", "build", "dist", "examples"]
 addopts = """
   --ignore setup.py
