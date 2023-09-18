@@ -62,8 +62,10 @@ def cli(session: nox.Session) -> None:
 @nox.session
 def lint(session: nox.Session) -> None:
     """Look for lint."""
+    skip_hooks = [] if "--no-skip" in session.posargs else ["check-manifest", "pyroma"]
+
     session.install("pre-commit")
-    session.run("pre-commit", "run", "--all-files")
+    session.run("pre-commit", "run", "--all-files", env={"SKIP": ",".join(skip_hooks)})
 
 
 @nox.session
