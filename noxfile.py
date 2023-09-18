@@ -56,8 +56,8 @@ def test_notebooks(session: nox.Session) -> None:
     session.run(*args)
 
 
-@nox.session
-def cli(session: nox.Session) -> None:
+@nox.session(name="test-cli")
+def test_cli(session: nox.Session) -> None:
     """Test the command line interface."""
     session.install(".")
 
