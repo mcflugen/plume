@@ -19,20 +19,23 @@ jobs:
             shell: bash -l {0}
 
         steps:
-          - uses: actions/checkout@v2
-          - uses: conda-incubator/setup-miniconda@v2
+          - uses: actions/checkout@v3
+
+          - uses: mamba-org/setup-micromamba@v1
             with:
-              auto-update-conda: true
-              python-version: "3.11"
-              channels: conda-forge
+              micromamba-version: latest
+              environment-name: testing
+              create-args: >-
+                python=${{ matrix.python-version }}
+                mamba
+
               channel-priority: true
 
           - name: Show conda installation info
-            run: conda info
-
-          - name: Install dependencies
             run: |
-              pip install -e ".[notebook,testing]"
+              mamba install nox
+              mamba list
+              mamba info
 
           - name: Test notebooks
-            run: pytest --nbmake notebooks/*ipynb
+            run: nox -s test-notebooks
