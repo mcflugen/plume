@@ -1,11 +1,11 @@
-name: Flake8
+name: Lint
 
 on: [push, pull_request]
 
 jobs:
 
   lint:
-    name: Check for lint
+    name: Check code format
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
     # by the push to the branch. Without this if check, checks are duplicated since
     # internal PRs match both the push and pull_request events.
@@ -15,13 +15,23 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: 3.8
+          micromamba-version: latest
+          environment-name: testing
+          create-args: >-
+            python=3.11
+            mamba
+
+          channel-priority: true
+
+      - name: Show conda installation info
+        run: |
+          mamba install nox
+          mamba info
+          mamba list
 
       - name: Lint
-        run: |
-          pip install flake8
-          flake8 plume tests
+        run: nox -s lint
