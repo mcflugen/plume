@@ -34,8 +34,6 @@ jobs:
             python=${{ matrix.python-version }}
             mamba
 
-          channel-priority: true
-
       - name: Show conda installation info
         run: |
           mamba install nox
