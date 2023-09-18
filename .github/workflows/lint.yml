@@ -16,22 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - uses: mamba-org/setup-micromamba@v1
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
         with:
-          micromamba-version: latest
-          environment-name: testing
-          create-args: >-
-            python=3.11
-            mamba
-
-          channel-priority: true
-
-      - name: Show conda installation info
-        run: |
-          mamba install nox
-          mamba info
-          mamba list
+          python-version: 3.11
 
       - name: Lint
-        run: nox -s lint
+        run: |
+          pip install nox
+          nox -s lint
