@@ -10,20 +10,21 @@ ROOT = pathlib.Path(__file__).parent
 @nox.session(venv_backend="mamba")
 def install(session: nox.Session) -> None:
     """Install the package."""
-    session.conda_install("--file=requirements.txt", "gsl")
-    session.install(".", "--no-deps")
+    session.conda_install(
+        "--file=requirements.txt",
+        "gsl",
+        channel=["nodefaults", "conda-forge"],
+    )
+    session.install("-e", ".", "--no-deps")
 
 
 @nox.session(venv_backend="mamba")
 def test(session: nox.Session) -> None:
     """Run the tests."""
+    install(session)
     session.conda_install(
-        "gsl",
-        "--file=requirements.txt",
-        "--file=requirements-testing.txt",
-        channel=["nodefaults", "conda-forge"],
+        "--file=requirements-testing.txt", channel=["nodefaults", "conda-forge"]
     )
-    session.install("-e", ".", "--no-deps")
 
     session.run("pytest", "--cov=src/plume", "-vvv")
     session.run("coverage", "report", "--ignore-errors", "--show-missing")
@@ -43,23 +44,21 @@ def test_notebooks(session: nox.Session) -> None:
         "-vvv",
     ] + session.posargs
 
+    install(session)
     session.conda_install(
-        "gsl",
         "notebook",
         "--file=requirements-testing.txt",
-        "--file=requirements.txt",
         channel=["nodefaults", "conda-forge"],
     )
     session.install("git+https://github.com/mcflugen/nbmake.git@mcflugen/add-markers")
-    session.install("-e", ".", "--no-deps")
 
     session.run(*args)
 
 
-@nox.session(name="test-cli")
+@nox.session(name="test-cli", venv_backend="mamba")
 def test_cli(session: nox.Session) -> None:
     """Test the command line interface."""
-    session.install(".")
+    install(session)
 
     session.run("plume", "--version")
     session.run("plume", "--help")
