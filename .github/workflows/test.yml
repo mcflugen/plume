@@ -24,49 +24,33 @@ jobs:
         python-version: ["3.9", "3.10", "3.11"]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
-          channels: conda-forge
-          channel-priority: true
-
-      - name: Install gsl
-        run: |
-          conda install mamba
-          mamba install gsl
+          micromamba-version: latest
+          environment-name: testing
+          create-args: >-
+            python=${{ matrix.python-version }}
+            mamba
 
       - name: Show conda installation info
         run: |
-          conda info
-          conda list
-
-      - name: Build and install package
-        run: |
-          pip install -e .
-
-      - name: Install testing requirements
-        run: pip install -e .[testing]
+          mamba install nox
+          mamba info
+          mamba list
 
       - name: Test
         env:
           HYPOTHESIS_PROFILE: "ci"
         run: |
-          python -c 'import plume; print(plume.__version__)'
-          pytest --cov=plume --cov-report=xml:$(pwd)/coverage.xml -vvv -n auto
+          nox -s test
 
       - name: Test command line
         env:
           PYTHONIOENCODING: "utf-8"
         run: |
-          plume --version
-          plume --help
-          plume generate --help
-          plume setup --help
-          plume run --help
-          plume generate plume.toml
+          nox -s test-cli
 
       - name: Coveralls
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'

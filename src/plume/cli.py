@@ -114,9 +114,9 @@ def load_config(file: Optional[TextIO] = None):
     that_version = parse_version(conf["_version"])
     if this_version.major != that_version.major:
         warnings.warn(
-            "possible version mismatch. file is version v{}, but you are using plume v{}".format(
-                that_version, this_version
-            )
+            f"possible version mismatch. file is version v{that_version},"
+            f" but you are using plume v{this_version}",
+            stacklevel=2,
         )
 
     return conf
@@ -132,7 +132,7 @@ def _contents_of_input_file(infile: str) -> str:
         return contents
 
     contents = {
-        "plume.toml": tomllib.dumps(dict(plume=params)),
+        "plume.toml": tomllib.dumps({"plume": params}),
         # "river.csv": as_csv(
         #     [[0.0, 50.0, 5.0, 1.5]],
         #     header=os.linesep.join(
@@ -299,7 +299,7 @@ def run(ctx, dry_run: bool) -> None:
 
     if verbose and not silent:
         out("plume.toml = |")
-        out(textwrap.indent(tomllib.dumps(dict(plume=params)).strip(), prefix="  "))
+        out(textwrap.indent(tomllib.dumps({"plume": params}).strip(), prefix="  "))
 
     params = params["plume"]
 

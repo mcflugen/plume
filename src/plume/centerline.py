@@ -131,25 +131,19 @@ class PlumeCenterline:
         if self.is_straight:
             return np.fabs(np.cos(self.river_angle)) > 1e-12
 
-        if (
+        return (
             np.fabs(np.cos(self.river_angle)) <= 1e-12
             or np.tan(self.river_angle) * self.ocean_velocity <= 0.0
-        ):
-            return True
-        else:
-            return False
+        )
 
     def is_function_of_y(self):
         if self.is_straight:
             return np.fabs(np.sin(self.river_angle)) > 1e-12
 
-        if (
+        return (
             np.fabs(np.cos(self.river_angle)) <= 1e-12
             or np.tan(self.river_angle) * self.ocean_velocity >= 0.0
-        ):
-            return True
-        else:
-            return False
+        )
 
     def path_length(self, bounds):
         from .ext.centerline import path_lengths

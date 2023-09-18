@@ -3,3 +3,4 @@ landlab>=2.0.0b7
 numpy
 pyyaml
 scipy
+tomlkit
