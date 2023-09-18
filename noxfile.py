@@ -19,6 +19,33 @@ def test(session: nox.Session) -> None:
     session.run("coverage", "report", "--ignore-errors", "--show-missing")
 
 
+@nox.session(name="test-notebooks", venv_backend="mamba")
+def test_notebooks(session: nox.Session) -> None:
+    """Run the notebooks."""
+    args = [
+        "pytest",
+        "notebooks",
+        "--nbmake",
+        "--nbmake-kernel=python3",
+        "--nbmake-timeout=3000",
+        "-n",
+        "auto",
+        "-vvv",
+    ] + session.posargs
+
+    session.conda_install(
+        "gsl",
+        "notebook",
+        "--file=requirements-testing.txt",
+        "--file=requirements.txt",
+        channel=["nodefaults", "conda-forge"],
+    )
+    session.install("git+https://github.com/mcflugen/nbmake.git@mcflugen/add-markers")
+    session.install("-e", ".", "--no-deps")
+
+    session.run(*args)
+
+
 @nox.session
 def cli(session: nox.Session) -> None:
     """Test the command line interface."""
