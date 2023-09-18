@@ -1,6 +1,5 @@
 include CHANGES.rst
 include CITATION.cff
-include plume/ext/centerline.c
 
 exclude .pre-commit-config.yaml
 exclude requirements*.txt
