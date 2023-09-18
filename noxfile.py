@@ -78,9 +78,7 @@ def towncrier(session: nox.Session) -> None:
 @nox.session(name="sync-requirements", python="3.11", venv_backend="conda")
 def sync_requirements(session: nox.Session) -> None:
     """Sync requirements.in with pyproject.toml."""
-    pypi_mapping = {"ecmwflibs": "findlibs"}
-
-    with open("requirements.in", "w") as fp:
+    with open("requirements.txt", "w") as fp:
         session.run(
             "python",
             "-c",
@@ -91,15 +89,6 @@ with open("pyproject.toml", "rb") as fp:
 """,
             stdout=fp,
         )
-
-    with open("requirements.in") as fp:
-        pypi_requirements = set(fp.read().splitlines())
-
-    with open("requirements-conda.in", "w") as fp:
-        for requirement in sorted(
-            {pypi_mapping.get(req, req) for req in pypi_requirements}
-        ):
-            print(requirement, file=fp)
 
 
 @nox.session
