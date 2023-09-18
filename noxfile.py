@@ -11,9 +11,7 @@ ROOT = pathlib.Path(__file__).parent
 def test(session: nox.Session) -> None:
     """Run the tests."""
     session.conda_install(
-        "--file=requirements.txt",
-        "--file=requirements-testing.txt",
-        "gsl"
+        "--file=requirements.txt", "--file=requirements-testing.txt", "gsl"
     )
     session.install(".", "--no-deps")
 
