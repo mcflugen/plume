@@ -113,11 +113,17 @@ def build(session: nox.Session) -> None:
     )
 
 
-@nox.session
+@nox.session(python="3.11", venv_backend="mamba")
 def release(session):
     """Tag, build and publish a new release to PyPI."""
+    session.conda_install("gsl", channel=["nodefaults", "conda-forge"])
+
+    session.install("-e", ".")  # , "--no-deps")
+
     session.install("zest.releaser[recommended]")
     session.install("zestreleaser.towncrier")
+
+    session.install("-r", "requirements-setup.txt")
     session.run("fullrelease")
 
 
