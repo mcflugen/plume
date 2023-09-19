@@ -4,6 +4,19 @@ Release Notes
 
 .. towncrier release notes start
 
+0.2.2 (2023-09-18)
+------------------
+
+Other Changes and Additions
+```````````````````````````
+
+- Updated the *cython* code used to calculate the centerline to fix a compile error
+  related to the update to *cython* v3. (`#10 <https://github.com/mcflugen/plume/issues/10>`_)
+- Added support for Python 3.11, dropped Python 3.8. (`#11 <https://github.com/mcflugen/plume/issues/11>`_)
+- Added a *nox* file for routine project maintenance and continuous
+  integration. (`#12 <https://github.com/mcflugen/plume/issues/12>`_)
+
+
 0.2.1 (2022-06-29)
 ------------------
 
