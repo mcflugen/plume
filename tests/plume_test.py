@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from landlab import RasterModelGrid
-from plume import Plume
+from plume.plume import Plume
 
 
 def test_plume_deposit_thickness():
