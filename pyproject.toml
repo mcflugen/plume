@@ -54,11 +54,7 @@ repository = "https://github.com/mflugen/plume"
 
 [project.optional-dependencies]
 dev = [
-    "black",
-    "flake8",
-    "flake8-bugbear",
-    "isort",
-    "pre-commit",
+    "nox",
 ]
 testing = [
     "coveralls",
@@ -94,12 +90,15 @@ content-type = "text/x-rst"
 [tool.setuptools.dynamic.version]
 attr = "plume._version.__version__"
 
-[tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-combine_as_imports = true
-line_length = 88
+[tool.setuptools.package-data]
+plume = [
+    "**/*.pyx",
+]
+
+[tool.setuptools.packages.find]
+where = [
+    "src",
+]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
