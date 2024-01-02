@@ -1,0 +1,6 @@
+click==8.1.7
+landlab==2.7.0
+numpy==1.26.2
+pyyaml==6.0.1
+scipy==1.11.4
+tomlkit==0.12.3

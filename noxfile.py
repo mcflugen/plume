@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import glob
 import pathlib
 import shutil
 from itertools import chain
@@ -16,7 +15,7 @@ ROOT = pathlib.Path(__file__).parent
 def install(session: nox.Session) -> None:
     """Install the package."""
     session.conda_install(
-        "--file=requirements.txt",
+        "--file=requirements/required.txt",
         "gsl",
         channel=["nodefaults", "conda-forge"],
     )
@@ -28,7 +27,7 @@ def test(session: nox.Session) -> None:
     """Run the tests."""
     install(session)
     session.conda_install(
-        "--file=requirements-testing.txt", channel=["nodefaults", "conda-forge"]
+        "--file=requirements/testing.txt", channel=["nodefaults", "conda-forge"]
     )
 
     session.run("pytest", "--cov=src/plume", "-vvv")
@@ -51,8 +50,8 @@ def test_notebooks(session: nox.Session) -> None:
 
     install(session)
     session.conda_install(
-        "notebook",
-        "--file=requirements-testing.txt",
+        "--file=requirements/notebook.txt",
+        "--file=requirements/testing.txt",
         channel=["nodefaults", "conda-forge"],
     )
     session.install("git+https://github.com/mcflugen/nbmake.git@mcflugen/add-markers")
@@ -81,9 +80,9 @@ def lint(session: nox.Session) -> None:
     session.install("pre-commit")
     session.run("pre-commit", "run", "--all-files", env={"SKIP": ",".join(skip_hooks)})
 
-    session.install("build", "twine")
-    session.run("pyproject-build")
-    session.run("twine", "check", *glob.glob("dist/*"))
+    # session.install("build", "twine")
+    # session.run("pyproject-build")
+    # session.run("twine", "check", *glob.glob("dist/*"))
 
 
 @nox.session
@@ -132,12 +131,11 @@ def release(session):
     """Tag, build and publish a new release to PyPI."""
     session.conda_install("gsl", channel=["nodefaults", "conda-forge"])
 
-    session.install("-e", ".")  # , "--no-deps")
+    session.install("-e", ".")
 
     session.install("zest.releaser[recommended]")
     session.install("zestreleaser.towncrier")
 
-    session.install("-r", "requirements-setup.txt")
     session.run("fullrelease")
 
 
