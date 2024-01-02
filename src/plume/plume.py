@@ -3,9 +3,8 @@ from __future__ import annotations
 
 import numpy as np
 from landlab import Component
-
-from .centerline import PlumeCenterline
-from .river import River
+from plume.centerline import PlumeCenterline
+from plume.river import River
 
 SQRT_PI = np.sqrt(np.pi)
 SQRT_TWO = np.sqrt(2.0)
