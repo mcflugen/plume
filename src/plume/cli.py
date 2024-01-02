@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+from __future__ import annotations
+
 import os
 import pathlib
 import textwrap
@@ -6,7 +8,8 @@ import warnings
 from collections import defaultdict
 from functools import partial
 from io import StringIO
-from typing import Optional, TextIO
+from typing import Optional
+from typing import TextIO
 
 import numpy as np
 import rich_click as click
@@ -68,7 +71,7 @@ err = partial(click.secho, fg="red", err=True)
 #     xy_of_lower_left = Parameter("xy_of_lower_left", [0.0, 0.0], valid=Length(2), help="coordinates of lower-left node of grid")
 
 
-def load_config(file: Optional[TextIO] = None):
+def load_config(file: TextIO | None = None):
     """Load plume config file.
 
     Parameters

@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import pathlib
 
 import pytest
 import tomlkit as tomllib
 from click.testing import CliRunner
-
 from plume.cli import plume
 
 

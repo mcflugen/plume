@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+from __future__ import annotations
+
 import numpy as np
 
 EPSILON = np.finfo(float).eps

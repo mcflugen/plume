@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import pathlib
 import sys
@@ -5,7 +7,8 @@ import sys
 import cython_gsl
 import numpy
 from Cython.Build import cythonize
-from setuptools import Extension, setup
+from setuptools import Extension
+from setuptools import setup
 
 os.environ.setdefault("LIB_GSL", str(pathlib.Path(sys.prefix) / "Library"))
 
