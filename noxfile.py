@@ -1,13 +1,18 @@
+from __future__ import annotations
+
+import glob
 import pathlib
 import shutil
 from itertools import chain
 
 import nox
 
+PYTHON_VERSION = "3.12"
+
 ROOT = pathlib.Path(__file__).parent
 
 
-@nox.session(venv_backend="mamba")
+@nox.session(python=PYTHON_VERSION, venv_backend="conda")
 def install(session: nox.Session) -> None:
     """Install the package."""
     session.conda_install(
@@ -18,7 +23,7 @@ def install(session: nox.Session) -> None:
     session.install("-e", ".", "--no-deps")
 
 
-@nox.session(venv_backend="mamba")
+@nox.session(python=PYTHON_VERSION, venv_backend="conda")
 def test(session: nox.Session) -> None:
     """Run the tests."""
     install(session)
@@ -30,7 +35,7 @@ def test(session: nox.Session) -> None:
     session.run("coverage", "report", "--ignore-errors", "--show-missing")
 
 
-@nox.session(name="test-notebooks", venv_backend="mamba")
+@nox.session(name="test-notebooks", python=PYTHON_VERSION, venv_backend="conda")
 def test_notebooks(session: nox.Session) -> None:
     """Run the notebooks."""
     args = [
@@ -55,7 +60,7 @@ def test_notebooks(session: nox.Session) -> None:
     session.run(*args)
 
 
-@nox.session(name="test-cli", venv_backend="mamba")
+@nox.session(name="test-cli", python=PYTHON_VERSION, venv_backend="conda")
 def test_cli(session: nox.Session) -> None:
     """Test the command line interface."""
     install(session)
@@ -75,6 +80,10 @@ def lint(session: nox.Session) -> None:
 
     session.install("pre-commit")
     session.run("pre-commit", "run", "--all-files", env={"SKIP": ",".join(skip_hooks)})
+
+    session.install("build", "twine")
+    session.run("pyproject-build")
+    session.run("twine", "check", *glob.glob("dist/*"))
 
 
 @nox.session
@@ -104,16 +113,21 @@ with open("pyproject.toml", "rb") as fp:
 def build(session: nox.Session) -> None:
     """Build sdist and wheel dists."""
     session.install("pip")
-    session.install("wheel")
-    session.install("setuptools")
+    session.install(
+        "cython",
+        "cythongsl",
+        "numpy",
+        "setuptools",
+        "wheel",
+    )
     session.run("python", "--version")
     session.run("pip", "--version")
     session.run(
-        "python", "setup.py", "bdist_wheel", "sdist", "--dist-dir", "./wheelhouse"
+        "python", "setup.py", "bdist_wheel", "sdist", "--dist-dir", "build/wheelhouse"
     )
 
 
-@nox.session(python="3.11", venv_backend="mamba")
+@nox.session(python=PYTHON_VERSION, venv_backend="conda")
 def release(session):
     """Tag, build and publish a new release to PyPI."""
     session.conda_install("gsl", channel=["nodefaults", "conda-forge"])
