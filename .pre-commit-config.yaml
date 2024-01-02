@@ -67,6 +67,12 @@ repos:
     - id: mixed-line-ending
     - id: trailing-whitespace
     - id: name-tests-test
+    - id: file-contents-sorter
+      files: |
+        (?x)^(
+          .*requirements(-\w+)?.(in|txt)|
+          requirements/.*\.txt
+        )
 
 # - repo: https://github.com/regebro/pyroma
 #   rev: "4.2"
