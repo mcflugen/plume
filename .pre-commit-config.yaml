@@ -45,13 +45,13 @@ repos:
   rev: v3.10.1
   hooks:
   - id: pyupgrade
-    args: [--py39-plus]
+    args: [--py310-plus]
 
-- repo: https://github.com/PyCQA/isort
-  rev: 5.12.0
+- repo: https://github.com/asottile/reorder-python-imports
+  rev: v3.12.0
   hooks:
-  - id: isort
-    files: \.py$
+  - id: reorder-python-imports
+    args: [--py310-plus, --add-import, "from __future__ import annotations"]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.4.0
@@ -66,6 +66,7 @@ repos:
     - id: forbid-new-submodules
     - id: mixed-line-ending
     - id: trailing-whitespace
+    - id: name-tests-test
 
 - repo: https://github.com/regebro/pyroma
   rev: "4.2"
