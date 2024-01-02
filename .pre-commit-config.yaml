@@ -71,7 +71,8 @@ repos:
       files: |
         (?x)^(
           .*requirements(-\w+)?.(in|txt)|
-          requirements/.*\.txt
+          requirements/.*\.txt|
+          .gitignore
         )
 
 # - repo: https://github.com/regebro/pyroma
