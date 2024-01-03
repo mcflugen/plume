@@ -1,4 +1,5 @@
-from ._version import __version__
-from .plume import Plume
+from __future__ import annotations
 
-__all__ = ["__version__", "Plume"]
+from ._version import __version__
+
+__all__ = ["__version__"]

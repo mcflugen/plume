@@ -19,21 +19,20 @@ jobs:
             shell: bash -l {0}
 
         steps:
-          - uses: actions/checkout@v3
+          - uses: actions/checkout@v4
 
-          - uses: mamba-org/setup-micromamba@v1
+          - uses: conda-incubator/setup-miniconda@v2
             with:
-              micromamba-version: latest
-              environment-name: testing
-              create-args: >-
-                python=${{ matrix.python-version }}
-                mamba
+              python-version: "3.12"
+              miniforge-variant: Miniforge3
+              miniforge-version: latest
+              auto-update-conda: true
 
           - name: Show conda installation info
             run: |
-              mamba install nox
-              mamba list
-              mamba info
+              conda install nox
+              conda list
+              conda info
 
           - name: Test notebooks
             run: nox -s test-notebooks

@@ -1,9 +1,11 @@
 #! /usr/bin/env python
+from __future__ import annotations
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
-
-from plume.centerline import nearest_point_on_ray, unit_vector
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
+from plume.centerline import nearest_point_on_ray
+from plume.centerline import unit_vector
 
 
 def test_unit_vector_with_scalars():

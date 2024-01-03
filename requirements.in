@@ -1,6 +1,7 @@
-click
 landlab>=2.0.0b7
 numpy
+packaging
 pyyaml
+rich-click
 scipy
 tomlkit

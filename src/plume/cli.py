@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+from __future__ import annotations
+
 import os
 import pathlib
 import textwrap
@@ -6,7 +8,7 @@ import warnings
 from collections import defaultdict
 from functools import partial
 from io import StringIO
-from typing import Optional, TextIO
+from typing import TextIO
 
 import numpy as np
 import rich_click as click
@@ -15,10 +17,9 @@ import yaml
 from landlab import RasterModelGrid
 from landlab.io.netcdf import write_raster_netcdf
 from packaging.version import parse as parse_version
+from plume._version import __version__
+from plume.plume import Plume
 from scipy import interpolate
-
-from ._version import __version__
-from .plume import Plume
 
 click.rich_click.ERRORS_SUGGESTION = (
     "Try running the '--help' flag for more information."
@@ -68,7 +69,7 @@ err = partial(click.secho, fg="red", err=True)
 #     xy_of_lower_left = Parameter("xy_of_lower_left", [0.0, 0.0], valid=Length(2), help="coordinates of lower-left node of grid")
 
 
-def load_config(file: Optional[TextIO] = None):
+def load_config(file: TextIO | None = None):
     """Load plume config file.
 
     Parameters
