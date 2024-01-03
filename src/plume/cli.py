@@ -6,8 +6,10 @@ import pathlib
 import textwrap
 import warnings
 from collections import defaultdict
+from collections.abc import Iterable
 from functools import partial
 from io import StringIO
+from typing import Any
 from typing import TextIO
 
 import numpy as np
@@ -16,6 +18,7 @@ import tomlkit as tomllib
 import yaml
 from landlab import RasterModelGrid
 from landlab.io.netcdf import write_raster_netcdf
+from numpy.typing import NDArray
 from packaging.version import parse as parse_version
 from plume._version import __version__
 from plume.plume import Plume
@@ -69,7 +72,7 @@ err = partial(click.secho, fg="red", err=True)
 #     xy_of_lower_left = Parameter("xy_of_lower_left", [0.0, 0.0], valid=Length(2), help="coordinates of lower-left node of grid")
 
 
-def load_config(file: TextIO | None = None):
+def load_config(file: TextIO | None = None) -> dict[str, Any]:
     """Load plume config file.
 
     Parameters
@@ -126,7 +129,7 @@ def load_config(file: TextIO | None = None):
 def _contents_of_input_file(infile: str) -> str:
     params = load_config()
 
-    def as_csv(data, header=None):
+    def as_csv(data: NDArray[np.float64], header: str = "") -> str:
         with StringIO() as fp:
             np.savetxt(fp, data, header=header, delimiter=",", fmt="%.1f")
             contents = fp.getvalue()
@@ -157,12 +160,12 @@ def _contents_of_input_file(infile: str) -> str:
     return contents[infile]
 
 
-def load_params_from_strings(values):
-    params = defaultdict(dict)
+def load_params_from_strings(values: Iterable[str]) -> dict[str, Any]:
+    params: dict[str, Any] = defaultdict(dict)
 
     for param in values:
         group_dot_name, value = param.split("=")
-        value = yaml.load(value)
+        value = yaml.safe_load(value)
         try:
             group, name = group_dot_name.split(".")
         except ValueError:
@@ -214,7 +217,7 @@ def plume(cd: str, silent: bool, verbose: bool) -> None:
 
 
 class RiverTimeSeries:
-    def __init__(self, filepath, kind="linear"):
+    def __init__(self, filepath: str, kind: str = "linear"):
         data = np.loadtxt(filepath, delimiter=",", comments="#").reshape((-1, 4))
         if len(data) == 1:
             data = np.vstack([data, data])
@@ -234,24 +237,24 @@ class RiverTimeSeries:
         self._width, self._depth, self._velocity = self._river(self._time)
 
     @property
-    def velocity(self):
+    def velocity(self) -> float:
         return self._velocity
 
     @property
-    def width(self):
+    def width(self) -> float:
         return self._width
 
     @property
-    def depth(self):
+    def depth(self) -> float:
         return self._depth
 
-    def update(self):
+    def update(self) -> None:
         self._time += 1.0
         self._width, self._depth, self._velocity = self._river(self._time)
 
 
 class OceanTimeSeries:
-    def __init__(self, filepath, kind="linear"):
+    def __init__(self, filepath: str, kind: str = "linear"):
         data = np.loadtxt(filepath, delimiter=",", comments="#").reshape((-1, 3))
         if len(data) == 1:
             data = np.vstack([data, data])
@@ -270,10 +273,10 @@ class OceanTimeSeries:
         self._velocity, _ = self._ocean(self._time)
 
     @property
-    def velocity(self):
+    def velocity(self) -> float:
         return self._velocity
 
-    def update(self):
+    def update(self) -> None:
         self._time += 1.0
         self._velocity, _ = self._ocean(self._time)
 
@@ -281,7 +284,7 @@ class OceanTimeSeries:
 @plume.command()
 @click.option("--dry-run", is_flag=True, help="Do not actually run the model")
 @click.pass_context
-def run(ctx, dry_run: bool) -> None:
+def run(ctx: click.Context, dry_run: bool) -> None:
     """Run the plume simulation on a set of input files.
 
     ## Examples
@@ -372,7 +375,7 @@ def generate(infile: str) -> None:
 
 @plume.command()
 @click.pass_context
-def setup(ctx) -> None:
+def setup(ctx: click.Context) -> None:
     """Setup a folder of input files for a simulation.
 
     *plume setup* creates a set of example input files for the *plume* program.

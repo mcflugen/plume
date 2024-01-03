@@ -2,18 +2,25 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 
 EPSILON = np.finfo(float).eps
 PI_4 = np.pi / 4.0
 
 
-def unit_vector(v):
+def unit_vector(v: ArrayLike) -> NDArray[np.float64]:
     v = np.asarray(v).reshape((2, -1))
     v_abs = np.linalg.norm(v, axis=0)
     return np.divide(v, v_abs, where=v_abs > 0.0, out=np.zeros_like(v)).squeeze()
 
 
-def nearest_point_on_ray(points, origin=(0.0, 0.0), angle=PI_4, out=None):
+def nearest_point_on_ray(
+    points: ArrayLike,
+    origin: ArrayLike = (0.0, 0.0),
+    angle: float = PI_4,
+    out: NDArray[np.float64] | None = None,
+) -> NDArray[np.float64]:
     """Find the nearest point on a ray.
 
     Parameters
@@ -58,11 +65,11 @@ class PlumeCenterline:
 
     def __init__(
         self,
-        river_width,
-        river_velocity=1.0,
-        ocean_velocity=1.0,
-        river_angle=0.0,
-        river_loc=(0.0, 0.0),
+        river_width: float,
+        river_velocity: float = 1.0,
+        ocean_velocity: float = 1.0,
+        river_angle: float = 0.0,
+        river_loc: tuple[float, float] = (0.0, 0.0),
     ):
         self._river_width = river_width
         self._river_angle = river_angle
@@ -70,40 +77,40 @@ class PlumeCenterline:
         self._river_x0, self._river_y0 = river_loc
         self._ocean_velocity = ocean_velocity
         if self.is_straight:
-            self._c = None
+            self._c = np.inf
         else:
             self._c = np.fabs(1.53 * 0.909 * river_velocity / ocean_velocity)
 
     @property
-    def is_straight(self):
+    def is_straight(self) -> bool:
         return np.fabs(self.ocean_velocity) < 1e-12
 
     @property
-    def river_angle(self):
+    def river_angle(self) -> float:
         """Angle river mouth makes with the coast."""
         return self._river_angle
 
     @property
-    def river_width(self):
+    def river_width(self) -> float:
         return self._river_width
 
     @property
-    def river_velocity(self):
+    def river_velocity(self) -> float:
         return self._river_velocity
 
     @property
-    def x0(self):
+    def x0(self) -> float:
         return self._river_x0
 
     @property
-    def y0(self):
+    def y0(self) -> float:
         return self._river_y0
 
     @property
-    def ocean_velocity(self):
+    def ocean_velocity(self) -> float:
         return self._ocean_velocity
 
-    def x(self, y):
+    def x(self, y: NDArray[np.float64]) -> NDArray[np.float64]:
         if self.is_straight:
             return y / np.tan(self.river_angle)
         else:
@@ -116,7 +123,7 @@ class PlumeCenterline:
                 )
             ) + self.x0
 
-    def y(self, x):
+    def y(self, x: NDArray[np.float64]) -> NDArray[np.float64]:
         if self.is_straight:
             return np.tan(self.river_angle) * x
         else:
@@ -129,7 +136,7 @@ class PlumeCenterline:
                 + self.y0
             )
 
-    def is_function_of_x(self):
+    def is_function_of_x(self) -> bool:
         if self.is_straight:
             return np.fabs(np.cos(self.river_angle)) > 1e-12
 
@@ -138,7 +145,7 @@ class PlumeCenterline:
             or np.tan(self.river_angle) * self.ocean_velocity <= 0.0
         )
 
-    def is_function_of_y(self):
+    def is_function_of_y(self) -> bool:
         if self.is_straight:
             return np.fabs(np.sin(self.river_angle)) > 1e-12
 
@@ -147,7 +154,7 @@ class PlumeCenterline:
             or np.tan(self.river_angle) * self.ocean_velocity >= 0.0
         )
 
-    def path_length(self, bounds):
+    def path_length(self, bounds: ArrayLike) -> NDArray[np.float64]:
         from .ext.centerline import path_lengths
 
         bounds = np.asarray(bounds, dtype=float).reshape((-1, 2))
@@ -172,17 +179,19 @@ class PlumeCenterline:
 
         return lengths
 
-    def r(self, x, x0, y0):
+    def r(self, x: NDArray[np.float64], x0: float, y0: float) -> NDArray[np.float64]:
         return np.sqrt((x - x0) ** 2.0 + (self.y(x) - y0) ** 2.0)
 
     @staticmethod
-    def rotate_points(x, y, angle):
+    def rotate_points(
+        x: NDArray[np.float64], y: NDArray[np.float64], angle: float
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         return (
             x * np.cos(angle) - y * np.sin(angle),
             x * np.sin(angle) + y * np.cos(angle),
         )
 
-    def nearest_point(self, points):
+    def nearest_point(self, points: ArrayLike) -> NDArray[np.float64]:
         from .ext.centerline import nearest_points
 
         points = np.asarray(points).reshape((-1, 2))
@@ -210,7 +219,7 @@ class PlumeCenterline:
 
         return nearest * (1.0, np.sign(self.ocean_velocity)) + (self.x0, self.y0)
 
-    def distance_to(self, points):
+    def distance_to(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         points_on_centerline = self.nearest_point(points)
         distance = np.sqrt(np.power(points_on_centerline - points, 2).sum(axis=1))
         return distance
