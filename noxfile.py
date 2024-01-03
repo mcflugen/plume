@@ -14,21 +14,19 @@ ROOT = pathlib.Path(__file__).parent
 @nox.session(python=PYTHON_VERSION, venv_backend="conda")
 def install(session: nox.Session) -> None:
     """Install the package."""
-    session.conda_install(
-        "--file=requirements/required.txt",
-        "gsl",
-        channel=["nodefaults", "conda-forge"],
-    )
+    session.conda_install("gsl", channel=["nodefaults", "conda-forge"])
+    session.install("-r", "requirements/required.txt")
     session.install("-e", ".", "--no-deps")
 
 
 @nox.session(python=PYTHON_VERSION, venv_backend="conda")
 def test(session: nox.Session) -> None:
     """Run the tests."""
-    install(session)
-    session.conda_install(
-        "--file=requirements/testing.txt", channel=["nodefaults", "conda-forge"]
+    session.install(
+        *("-r", "requirements/testing.txt"),
+        *("-r", "requirements/required.txt"),
     )
+    session.install("-e", ".", "--no-deps")
 
     session.run("pytest", "--cov=src/plume", "-vvv")
     session.run("coverage", "report", "--ignore-errors", "--show-missing")
@@ -48,12 +46,12 @@ def test_notebooks(session: nox.Session) -> None:
         "-vvv",
     ] + session.posargs
 
-    install(session)
-    session.conda_install(
-        "--file=requirements/notebooks.txt",
-        "--file=requirements/testing.txt",
-        channel=["nodefaults", "conda-forge"],
+    session.install(
+        *("-r", "requirements/notebooks.txt"),
+        *("-r", "requirements/testing.txt"),
+        *("-r", "requirements/required.txt"),
     )
+    session.install("-e", ".", "--no-deps")
     session.install("git+https://github.com/mcflugen/nbmake.git@mcflugen/add-markers")
 
     session.run(*args)
@@ -62,7 +60,8 @@ def test_notebooks(session: nox.Session) -> None:
 @nox.session(name="test-cli", python=PYTHON_VERSION, venv_backend="conda")
 def test_cli(session: nox.Session) -> None:
     """Test the command line interface."""
-    install(session)
+    session.install("-r", "requirements/required.txt")
+    session.install("-e", ".", "--no-deps")
 
     session.run("plume", "--version")
     session.run("plume", "--help")
