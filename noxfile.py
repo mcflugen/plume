@@ -50,7 +50,7 @@ def test_notebooks(session: nox.Session) -> None:
 
     install(session)
     session.conda_install(
-        "--file=requirements/notebook.txt",
+        "--file=requirements/notebooks.txt",
         "--file=requirements/testing.txt",
         channel=["nodefaults", "conda-forge"],
     )
