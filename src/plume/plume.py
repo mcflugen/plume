@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import numpy as np
 from landlab import Component
+from landlab import RasterModelGrid
+from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 from plume.centerline import PlumeCenterline
 from plume.river import River
 
@@ -66,16 +69,16 @@ class Plume(Component):
 
     def __init__(
         self,
-        grid,
-        river_velocity=1.0,
-        river_width=1.0,
-        river_depth=1.0,
-        river_angle=0.0,
-        ocean_velocity=0.0,
-        river_concentration=1.0,
-        river_loc=(0.0, 0.0),
-        sediment_removal_rate=1.0,
-        sediment_bulk_density=1600.0,
+        grid: RasterModelGrid,
+        river_velocity: float = 1.0,
+        river_width: float = 1.0,
+        river_depth: float = 1.0,
+        river_angle: float = 0.0,
+        ocean_velocity: float = 0.0,
+        river_concentration: float = 1.0,
+        river_loc: tuple[float, float] = (0.0, 0.0),
+        sediment_removal_rate: float = 1.0,
+        sediment_bulk_density: float = 1600.0,
     ):
         """Simulate a hypopycnal sediment plume.
 
@@ -135,32 +138,42 @@ class Plume(Component):
 
         self._albertson_velocity = self.grid.zeros(at="node")
 
+        self._established_flow: tuple[NDArray[np.intp], ...]
+        self._establishing_flow: tuple[NDArray[np.intp], ...]
+        self._plug_flow: tuple[NDArray[np.intp], ...]
+        self._distance_to_river: NDArray[np.float64]
+        self._concentration: NDArray[np.float64]
+        self._xy_at_nearest_centerline: NDArray[np.float64]
+        self._distance_to_centerline: NDArray[np.float64]
+        self._distance_along_centerline: NDArray[np.float64]
+        self._zones: NDArray[np.int_]
+
     @property
-    def centerline(self):
+    def centerline(self) -> PlumeCenterline:
         return self._centerline
 
     @property
-    def river(self):
+    def river(self) -> River:
         return self._river
 
     @property
-    def ocean_sed_concentration(self):
+    def ocean_sed_concentration(self) -> float:
         return 0.0
 
     @property
-    def shore_normal(self):
+    def shore_normal(self) -> float:
         return self.river.angle
 
     @property
-    def sediment_removal_rate(self):
+    def sediment_removal_rate(self) -> float:
         return self._sediment_removal_rate
 
     @property
-    def plug_width(self):
+    def plug_width(self) -> float:
         return self.river.width * self.PLUG_WIDTH
 
     @property
-    def established_flow(self):
+    def established_flow(self) -> tuple[NDArray[np.intp], ...]:
         try:
             self._established_flow
         except AttributeError:
@@ -168,7 +181,7 @@ class Plume(Component):
         return self._established_flow
 
     @property
-    def establishing_flow(self):
+    def establishing_flow(self) -> tuple[NDArray[np.intp], ...]:
         try:
             self._establishing_flow
         except AttributeError:
@@ -176,7 +189,7 @@ class Plume(Component):
         return self._establishing_flow
 
     @property
-    def plug_flow(self):
+    def plug_flow(self) -> tuple[NDArray[np.intp], ...]:
         try:
             self._plug_flow
         except AttributeError:
@@ -184,7 +197,7 @@ class Plume(Component):
         return self._plug_flow
 
     @property
-    def distance_to_river(self):
+    def distance_to_river(self) -> NDArray[np.float64]:
         try:
             self._distance_to_river
         except AttributeError:
@@ -195,14 +208,14 @@ class Plume(Component):
         return self._distance_to_river
 
     @property
-    def concentration(self):
+    def concentration(self) -> NDArray[np.float64]:
         try:
             self._concentration
         except AttributeError:
             self._concentration = self.calc_concentration()
         return self._concentration
 
-    def calc_concentration(self):
+    def calc_concentration(self) -> NDArray[np.float64]:
         """Calculate the concentration of a conservative tracer."""
         conc = self.grid.at_node["tracer~conservative__mass_concentration"]
         conc.fill(0.0)
@@ -237,7 +250,7 @@ class Plume(Component):
 
         return conc
 
-    def calc_sediment_concentration(self, removal_rate):
+    def calc_sediment_concentration(self, removal_rate: float) -> NDArray[np.float64]:
         # removal_rate /= SECONDS_PER_DAY
 
         conc_sed = self.grid.at_node["sediment~suspended__mass_concentration"]
@@ -265,7 +278,9 @@ class Plume(Component):
 
         return conc_sed
 
-    def calc_deposit_thickness(self, removal_rate, out=None):
+    def calc_deposit_thickness(
+        self, removal_rate: float, out: NDArray[np.float64] | None = None
+    ) -> NDArray[np.float64]:
         if out is None:
             out = self.grid.zeros(at="node")
 
@@ -303,7 +318,7 @@ class Plume(Component):
         return out
 
     @property
-    def xy_at_nearest_centerline(self):
+    def xy_at_nearest_centerline(self) -> NDArray[np.float64]:
         try:
             self._xy_at_nearest_centerline
         except AttributeError:
@@ -311,7 +326,7 @@ class Plume(Component):
         return self._xy_at_nearest_centerline
 
     @property
-    def distance_to_centerline(self):
+    def distance_to_centerline(self) -> NDArray[np.float64]:
         try:
             self._distance_to_centerline
         except AttributeError:
@@ -319,7 +334,7 @@ class Plume(Component):
         return self._distance_to_centerline
 
     @property
-    def distance_along_centerline(self):
+    def distance_along_centerline(self) -> NDArray[np.float64]:
         try:
             self._distance_along_centerline
         except AttributeError:
@@ -327,25 +342,25 @@ class Plume(Component):
         return self._distance_along_centerline
 
     @property
-    def zones(self):
+    def zones(self) -> NDArray[np.int_]:
         try:
             self._zones
         except AttributeError:
             self._zones = self.calc_zones()
         return self._zones
 
-    def calc_nearest_centerline_point(self):
+    def calc_nearest_centerline_point(self) -> NDArray[np.float64]:
         return self._centerline.nearest_point(
             tuple(zip(self.grid.x_of_node, self.grid.y_of_node))
         )
 
-    def calc_distance_to_centerline(self):
+    def calc_distance_to_centerline(self) -> NDArray[np.float64]:
         xy_at_node = tuple(zip(self.grid.x_of_node, self.grid.y_of_node))
         return np.sqrt(
             np.power(self.xy_at_nearest_centerline - xy_at_node, 2).sum(axis=1)
         )
 
-    def calc_distance_along_centerline(self):
+    def calc_distance_along_centerline(self) -> NDArray[np.float64]:
         bounds = np.empty((self.grid.number_of_nodes, 2))
         if self.centerline.is_function_of_x():
             bounds[:, 0] = self.river.x0
@@ -355,14 +370,14 @@ class Plume(Component):
             bounds[:, 1] = self.xy_at_nearest_centerline[:, 1]
         return self._centerline.path_length(bounds)
 
-    def calc_zones(self):
+    def calc_zones(self) -> NDArray[np.int_]:
         zones = np.full(self.grid.number_of_nodes, self.ESTABLISHED_FLOW, dtype=int)
         zones[self.where_plug_flow()] = self.PLUG_FLOW
         zones[self.where_establishing_flow()] = self.ESTABLISHING_FLOW
 
         return zones
 
-    def where_plug_flow(self):
+    def where_plug_flow(self) -> tuple[NDArray[np.intp], ...]:
         lengths = self.distance_along_centerline
         return np.where(
             (lengths < self.plug_width)
@@ -372,11 +387,11 @@ class Plume(Component):
             )
         )
 
-    def where_established_flow(self):
+    def where_established_flow(self) -> tuple[NDArray[np.intp], ...]:
         lengths = self.distance_along_centerline
         return np.where(lengths > self.plug_width)
 
-    def where_establishing_flow(self):
+    def where_establishing_flow(self) -> tuple[NDArray[np.intp], ...]:
         lengths = self.distance_along_centerline
         return np.where(
             (lengths < self.plug_width)
@@ -386,7 +401,7 @@ class Plume(Component):
             )
         )
 
-    def where_ocean(self):
+    def where_ocean(self) -> tuple[NDArray[np.intp], ...]:
         v_river = self.unit_vector(np.cos(self.shore_angle), np.sin(self.shore_angle))
         v_point = self.unit_vector(
             self.river.x0 - self.grid.x_of_node, self.river.y0 - self.grid.y_of_node
@@ -394,7 +409,7 @@ class Plume(Component):
 
         return np.where(np.dot(v_river.squeeze(), v_point) <= 0.0)
 
-    def where_land(self):
+    def where_land(self) -> tuple[NDArray[np.intp], ...]:
         v_river = self.unit_vector(np.cos(self.shore_angle), np.sin(self.shore_angle))
         v_point = self.unit_vector(
             self.river.x0 - self.grid.x_of_node, self.river.y0 - self.grid.y_of_node
@@ -402,18 +417,18 @@ class Plume(Component):
 
         return np.where(np.dot(v_river.squeeze(), v_point) > 0.0)
 
-    def is_land(self):
+    def is_land(self) -> NDArray[np.bool_]:
         mask = np.full(self.grid.number_of_nodes, False, dtype=bool)
         mask[self.where_land()] = True
         return mask
 
     @staticmethod
-    def unit_vector(x, y):
+    def unit_vector(x: ArrayLike, y: ArrayLike) -> NDArray[np.float64]:
         v = np.asarray((x, y)).reshape((2, -1))
         v_abs = np.linalg.norm(v, axis=0)
         return np.divide(v, v_abs, where=v_abs > 0.0, out=np.zeros_like(v))
 
-    def run_one_step(self):
+    def run_one_step(self) -> None:
         removal_rate = self.grid.at_grid["sediment__removal_rate"]
         # bulk_density = self.grid.at_grid["sediment__bulk_density"]
         try:
@@ -425,4 +440,4 @@ class Plume(Component):
             deposit = self.calc_deposit_thickness(removal_rate)
             self.grid.at_node["sediment_deposit__thickness"] += deposit
 
-            self._removal_rate = removal_rate
+            self._removal_rate: float = removal_rate
