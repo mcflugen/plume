@@ -22,6 +22,7 @@ def install(session: nox.Session) -> None:
 @nox.session(python=PYTHON_VERSION, venv_backend="conda")
 def test(session: nox.Session) -> None:
     """Run the tests."""
+    session.conda_install("gsl", channel=["nodefaults", "conda-forge"])
     session.install(
         *("-r", "requirements/testing.txt"),
         *("-r", "requirements/required.txt"),
@@ -46,6 +47,7 @@ def test_notebooks(session: nox.Session) -> None:
         "-vvv",
     ] + session.posargs
 
+    session.conda_install("gsl", channel=["nodefaults", "conda-forge"])
     session.install(
         *("-r", "requirements/notebooks.txt"),
         *("-r", "requirements/testing.txt"),
@@ -60,6 +62,7 @@ def test_notebooks(session: nox.Session) -> None:
 @nox.session(name="test-cli", python=PYTHON_VERSION, venv_backend="conda")
 def test_cli(session: nox.Session) -> None:
     """Test the command line interface."""
+    session.conda_install("gsl", channel=["nodefaults", "conda-forge"])
     session.install("-r", "requirements/required.txt")
     session.install("-e", ".", "--no-deps")
 
