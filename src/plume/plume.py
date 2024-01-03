@@ -138,6 +138,16 @@ class Plume(Component):
 
         self._albertson_velocity = self.grid.zeros(at="node")
 
+        self._established_flow: tuple[NDArray[np.intp], ...]
+        self._establishing_flow: tuple[NDArray[np.intp], ...]
+        self._plug_flow: tuple[NDArray[np.intp], ...]
+        self._distance_to_river: NDArray[np.float64]
+        self._concentration: NDArray[np.float64]
+        self._xy_at_nearest_centerline: NDArray[np.float64]
+        self._distance_to_centerline: NDArray[np.float64]
+        self._distance_along_centerline: NDArray[np.float64]
+        self._zones: NDArray[np.int_]
+
     @property
     def centerline(self) -> PlumeCenterline:
         return self._centerline
@@ -165,7 +175,7 @@ class Plume(Component):
     @property
     def established_flow(self) -> tuple[NDArray[np.intp], ...]:
         try:
-            self._established_flow: tuple[NDArray[np.intp], ...]
+            self._established_flow
         except AttributeError:
             self._established_flow = self.where_established_flow()
         return self._established_flow
@@ -173,7 +183,7 @@ class Plume(Component):
     @property
     def establishing_flow(self) -> tuple[NDArray[np.intp], ...]:
         try:
-            self._establishing_flow: tuple[NDArray[np.intp], ...]
+            self._establishing_flow
         except AttributeError:
             self._establishing_flow = self.where_establishing_flow()
         return self._establishing_flow
@@ -181,7 +191,7 @@ class Plume(Component):
     @property
     def plug_flow(self) -> tuple[NDArray[np.intp], ...]:
         try:
-            self._plug_flow: tuple[NDArray[np.intp], ...]
+            self._plug_flow
         except AttributeError:
             self._plug_flow = self.where_plug_flow()
         return self._plug_flow
@@ -189,7 +199,7 @@ class Plume(Component):
     @property
     def distance_to_river(self) -> NDArray[np.float64]:
         try:
-            self._distance_to_river: NDArray[np.float64]
+            self._distance_to_river
         except AttributeError:
             self._distance_to_river = np.sqrt(
                 np.power(self.grid.x_of_node - self.river.x0, 2)
@@ -200,7 +210,7 @@ class Plume(Component):
     @property
     def concentration(self) -> NDArray[np.float64]:
         try:
-            self._concentration: NDArray[np.float64]
+            self._concentration
         except AttributeError:
             self._concentration = self.calc_concentration()
         return self._concentration
@@ -310,7 +320,7 @@ class Plume(Component):
     @property
     def xy_at_nearest_centerline(self) -> NDArray[np.float64]:
         try:
-            self._xy_at_nearest_centerline: NDArray[np.float64]
+            self._xy_at_nearest_centerline
         except AttributeError:
             self._xy_at_nearest_centerline = self.calc_nearest_centerline_point()
         return self._xy_at_nearest_centerline
@@ -318,7 +328,7 @@ class Plume(Component):
     @property
     def distance_to_centerline(self) -> NDArray[np.float64]:
         try:
-            self._distance_to_centerline: NDArray[np.float64]
+            self._distance_to_centerline
         except AttributeError:
             self._distance_to_centerline = self.calc_distance_to_centerline()
         return self._distance_to_centerline
@@ -326,7 +336,7 @@ class Plume(Component):
     @property
     def distance_along_centerline(self) -> NDArray[np.float64]:
         try:
-            self._distance_along_centerline: NDArray[np.float64]
+            self._distance_along_centerline
         except AttributeError:
             self._distance_along_centerline = self.calc_distance_along_centerline()
         return self._distance_along_centerline
@@ -334,7 +344,7 @@ class Plume(Component):
     @property
     def zones(self) -> NDArray[np.int_]:
         try:
-            self._zones: NDArray[np.int_]
+            self._zones
         except AttributeError:
             self._zones = self.calc_zones()
         return self._zones
