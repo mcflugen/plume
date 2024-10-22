@@ -98,5 +98,5 @@ repos:
   rev: v1.12.1
   hooks:
   - id: mypy
-    additional_dependencies: [types-all]
+    additional_dependencies: [types-PyYAML]
     files: src/plume/.*\.py$
